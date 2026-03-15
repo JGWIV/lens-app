@@ -1710,17 +1710,10 @@ export const stories: Story[] = [
           name: "Yahoo Finance / AP",
           type: "Financial News / Wire Service",
         },
-        {
-          name: "Mortgage Professional America",
-          type: "Industry Trade Publication",
-        },
-        {
-          name: "The Educated Home Buyer",
-          type: "Consumer Finance / Real Estate",
-        },
+        { name: "Newsweek", type: "National Magazine / Center" },
       ],
       methodology:
-        "This story was built from 6 sources spanning financial journalism, national broadcast, and industry trade publications. All core facts — nomination date, Warsh's background, Senate committee composition, current mortgage rate levels — are confirmed across multiple sources. Named economist quotes are attributed to their institutions. The confidence badge is yellow because the central question — what Warsh will actually do as chair — is genuinely uncertain, and competing economic analyses from credentialed economists reach meaningfully different conclusions.",
+        "This story was built from 5 sources spanning financial journalism, national broadcast, and wire services. All core facts — nomination date, Warsh's background, Senate committee composition, current mortgage rate levels — are confirmed across multiple sources. Named economist quotes are attributed to their institutions. The confidence badge is yellow because the central question — what Warsh will actually do as chair — is genuinely uncertain, and competing economic analyses from credentialed economists reach meaningfully different conclusions.",
     },
     goDeeper: [
       {
