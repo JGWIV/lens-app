@@ -14,6 +14,11 @@ function getGreeting(): string {
   return "Good evening";
 }
 
+/**
+ * Determines which age-gated content a reader may see.
+ * Classification criteria (including the war/conflict 4-test exception)
+ * are documented on the Story.ageGate field in src/data/stories.ts.
+ */
 function getAgeGateAllowed(readerLevel: string): string[] {
   if (readerLevel === "adult") return ["all", "teen", "adult"];
   if (readerLevel === "teen") return ["all", "teen"];
