@@ -22,7 +22,9 @@ function formatTime(seconds: number): string {
   return `${m}:${s.toString().padStart(2, "0")}`;
 }
 
-type BriefState = "idle" | "playing" | "paused" | "done";
+type BriefState = "idle" | "intro" | "playing" | "paused" | "done";
+
+const INTRO_TEXT = "Welcome to your Lens Daily Brief. Here are today's top stories.";
 
 /* ── Daily Brief Page ── */
 
@@ -33,22 +35,30 @@ export default function DailyBrief() {
   const voiceMeta = VOICE_OPTIONS.find((v) => v.value === voiceKey);
   const voiceName = voiceMeta?.name ?? "The Anchor";
 
-  // Select top 5 stories by source count
-  const briefStories = [...stories]
-    .sort((a, b) => b.sources.confirming.length - a.sources.confirming.length)
-    .slice(0, 5);
+  // Fixed editorial order for the demo brief
+  const BRIEF_IDS = [
+    "oil-prices-strait-hormuz-2026",
+    "russia-ukraine-war-2026",
+    "measles-vaccines-federal-policy-2026",
+    "new-food-pyramid-2026",
+    "2026-midterm-elections",
+  ];
+  const briefStories = BRIEF_IDS
+    .map((id) => stories.find((s) => s.id === id))
+    .filter((s): s is NonNullable<typeof s> => s != null);
 
   const audioUrls = briefStories.map(
     (s) => s.audio.young?.[voiceKey] ?? ""
   );
 
   const [state, setState] = useState<BriefState>("idle");
-  const [storyIndex, setStoryIndex] = useState(0);
+  const [storyIndex, setStoryIndex] = useState(-1); // -1 = intro
   const [duration, setDuration] = useState(0);
   const [currentTime, setCurrentTime] = useState(0);
   const [headlineVisible, setHeadlineVisible] = useState(true);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const gapTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -56,6 +66,7 @@ export default function DailyBrief() {
       audioRef.current?.pause();
       audioRef.current = null;
       if (gapTimerRef.current) clearTimeout(gapTimerRef.current);
+      window.speechSynthesis?.cancel();
     };
   }, []);
 
@@ -131,36 +142,89 @@ export default function DailyBrief() {
     [audioUrls, briefStories.length]
   );
 
-  const handlePlay = useCallback(() => {
-    if (state === "idle" || state === "done") {
-      playStory(0);
-    } else if (state === "paused") {
+  const speakIntro = useCallback(
+    (onDone: () => void) => {
+      if (!window.speechSynthesis) {
+        onDone();
+        return;
+      }
+
+      window.speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance(INTRO_TEXT);
+      utterance.rate = 0.95;
+      utterance.pitch = 1;
+      utteranceRef.current = utterance;
+
+      utterance.onend = () => {
+        utteranceRef.current = null;
+        gapTimerRef.current = setTimeout(onDone, 1000);
+      };
+
+      utterance.onerror = () => {
+        utteranceRef.current = null;
+        onDone();
+      };
+
+      setStoryIndex(-1);
+      setHeadlineVisible(true);
+      setDuration(0);
+      setCurrentTime(0);
+      setState("intro");
+      window.speechSynthesis.speak(utterance);
+    },
+    []
+  );
+
+  const handlePause = useCallback(() => {
+    if (state === "intro") {
+      window.speechSynthesis?.pause();
+    } else {
+      audioRef.current?.pause();
+    }
+    setState("paused");
+  }, [state]);
+
+  const handleResume = useCallback(() => {
+    if (storyIndex === -1) {
+      window.speechSynthesis?.resume();
+      setState("intro");
+    } else {
       audioRef.current?.play();
       setState("playing");
     }
-  }, [state, playStory]);
+  }, [storyIndex]);
 
-  const handlePause = useCallback(() => {
-    audioRef.current?.pause();
-    setState("paused");
-  }, []);
+  const handlePlay = useCallback(() => {
+    if (state === "idle" || state === "done") {
+      speakIntro(() => playStory(0));
+    } else if (state === "paused") {
+      handleResume();
+    }
+  }, [state, playStory, speakIntro, handleResume]);
 
   const handleSkip = useCallback(() => {
     if (gapTimerRef.current) clearTimeout(gapTimerRef.current);
+    if (state === "intro" || storyIndex === -1) {
+      window.speechSynthesis?.cancel();
+      utteranceRef.current = null;
+      playStory(0);
+      return;
+    }
     if (storyIndex < briefStories.length - 1) {
       playStory(storyIndex + 1);
     } else {
       audioRef.current?.pause();
       setState("done");
     }
-  }, [storyIndex, briefStories.length, playStory]);
+  }, [state, storyIndex, briefStories.length, playStory]);
 
   const handleReplay = useCallback(() => {
-    playStory(0);
-  }, [playStory]);
+    speakIntro(() => playStory(0));
+  }, [speakIntro, playStory]);
 
   const progress = duration > 0 ? (currentTime / duration) * 100 : 0;
-  const isActive = state === "playing" || state === "paused";
+  const isActive = state === "playing" || state === "paused" || state === "intro";
+  const isIntro = storyIndex === -1;
   const currentStory = briefStories[storyIndex];
 
   return (
@@ -224,13 +288,13 @@ export default function DailyBrief() {
                   headlineVisible ? "opacity-100" : "opacity-0"
                 }`}
               >
-                {currentStory?.headline}
+                {isIntro ? INTRO_TEXT : currentStory?.headline}
               </h2>
             </div>
 
             {/* Story indicator */}
             <p className="text-xs text-text-muted">
-              Story {storyIndex + 1} of {briefStories.length}
+              {isIntro ? "Introduction" : `Story ${storyIndex + 1} of ${briefStories.length}`}
               <span className="mx-2 text-text-muted/40">|</span>
               {voiceName}
             </p>
@@ -239,11 +303,11 @@ export default function DailyBrief() {
             <div className="flex items-center gap-6">
               {/* Play/Pause */}
               <button
-                onClick={state === "playing" ? handlePause : handlePlay}
+                onClick={state === "playing" || state === "intro" ? handlePause : handlePlay}
                 className="w-14 h-14 rounded-full bg-navy text-warm-white flex items-center justify-center cursor-pointer hover:bg-navy-light transition-colors shadow-lg"
-                aria-label={state === "playing" ? "Pause" : "Play"}
+                aria-label={state === "playing" || state === "intro" ? "Pause" : "Play"}
               >
-                {state === "playing" ? (
+                {state === "playing" || state === "intro" ? (
                   <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M5.75 3a.75.75 0 00-.75.75v12.5c0 .414.336.75.75.75h1.5a.75.75 0 00.75-.75V3.75A.75.75 0 007.25 3h-1.5zm7 0a.75.75 0 00-.75.75v12.5c0 .414.336.75.75.75h1.5a.75.75 0 00.75-.75V3.75a.75.75 0 00-.75-.75h-1.5z" clipRule="evenodd" />
                   </svg>
@@ -266,10 +330,12 @@ export default function DailyBrief() {
               </button>
             </div>
 
-            {/* Time display */}
-            <p className="text-[11px] text-text-muted/60">
-              {formatTime(currentTime)} / {duration > 0 ? formatTime(duration) : "--:--"}
-            </p>
+            {/* Time display (hidden during intro — Web Speech has no duration) */}
+            {!isIntro && (
+              <p className="text-[11px] text-text-muted/60">
+                {formatTime(currentTime)} / {duration > 0 ? formatTime(duration) : "--:--"}
+              </p>
+            )}
           </div>
         )}
 
