@@ -25,6 +25,8 @@ function formatTime(seconds: number): string {
 type BriefState = "idle" | "intro" | "playing" | "paused" | "done";
 
 const INTRO_TEXT = "Welcome to your Lens Daily Brief. Here are today's top stories.";
+const STORY_MAX_SECONDS = 20;
+const FADE_DURATION = 1.5; // seconds for volume fade-out
 
 /* ── Daily Brief Page ── */
 
@@ -60,6 +62,13 @@ export default function DailyBrief() {
   const introSrc = `/audio/daily-brief-intro_${voiceKey}.mp3`;
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const gapTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const fadeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const fadeIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  function clearFade() {
+    if (fadeTimerRef.current) { clearTimeout(fadeTimerRef.current); fadeTimerRef.current = null; }
+    if (fadeIntervalRef.current) { clearInterval(fadeIntervalRef.current); fadeIntervalRef.current = null; }
+  }
 
   // Cleanup on unmount
   useEffect(() => {
@@ -67,19 +76,58 @@ export default function DailyBrief() {
       audioRef.current?.pause();
       audioRef.current = null;
       if (gapTimerRef.current) clearTimeout(gapTimerRef.current);
+      clearFade();
     };
   }, []);
 
-  const playStory = useCallback(
+  const advanceOrFinish = useCallback(
+    (index: number) => {
+      if (index < briefStories.length - 1) {
+        gapTimerRef.current = setTimeout(() => playStoryAt(index + 1), 1000);
+      } else {
+        setState("done");
+      }
+    },
+    [briefStories.length]
+  );
+
+  // Start fade-out at (STORY_MAX_SECONDS - FADE_DURATION), then pause at STORY_MAX_SECONDS
+  const scheduleFade = useCallback(
+    (audio: HTMLAudioElement, index: number) => {
+      clearFade();
+      const fadeStart = (STORY_MAX_SECONDS - FADE_DURATION) * 1000;
+
+      fadeTimerRef.current = setTimeout(() => {
+        // Gradually reduce volume over FADE_DURATION
+        const steps = 15;
+        const stepMs = (FADE_DURATION * 1000) / steps;
+        let step = 0;
+        fadeIntervalRef.current = setInterval(() => {
+          step++;
+          audio.volume = Math.max(0, 1 - step / steps);
+          if (step >= steps) {
+            clearFade();
+            audio.pause();
+            audio.volume = 1;
+            advanceOrFinish(index);
+          }
+        }, stepMs);
+      }, fadeStart);
+    },
+    [advanceOrFinish]
+  );
+
+  // We need a stable ref for the recursive function
+  const playStoryAt = useCallback(
     (index: number) => {
       // Fade out current headline
       setHeadlineVisible(false);
+      clearFade();
 
       const src = audioUrls[index];
       if (!src) {
-        // Skip stories with missing audio
         if (index < briefStories.length - 1) {
-          playStory(index + 1);
+          playStoryAt(index + 1);
         } else {
           setState("done");
         }
@@ -97,50 +145,52 @@ export default function DailyBrief() {
 
         const audio = new Audio(src);
         audioRef.current = audio;
+        audio.volume = 1;
         setDuration(0);
         setCurrentTime(0);
 
         audio.addEventListener("loadedmetadata", () => {
-          setDuration(audio.duration);
+          // Show the capped duration
+          setDuration(Math.min(audio.duration, STORY_MAX_SECONDS));
         });
 
         audio.addEventListener("timeupdate", () => {
-          setCurrentTime(audio.currentTime);
+          setCurrentTime(Math.min(audio.currentTime, STORY_MAX_SECONDS));
         });
 
         audio.addEventListener("ended", () => {
-          if (index < briefStories.length - 1) {
-            // 1-second pause between stories
-            gapTimerRef.current = setTimeout(() => {
-              playStory(index + 1);
-            }, 1000);
-          } else {
-            setState("done");
-          }
+          // If audio is shorter than cap, advance normally
+          clearFade();
+          advanceOrFinish(index);
         });
 
         audio.addEventListener("error", () => {
-          // Skip on error
+          clearFade();
           if (index < briefStories.length - 1) {
-            playStory(index + 1);
+            playStoryAt(index + 1);
           } else {
             setState("done");
           }
         });
 
-        audio.play().catch(() => {
-          if (index < briefStories.length - 1) {
-            playStory(index + 1);
-          } else {
-            setState("done");
-          }
-        });
+        audio.play()
+          .then(() => scheduleFade(audio, index))
+          .catch(() => {
+            if (index < briefStories.length - 1) {
+              playStoryAt(index + 1);
+            } else {
+              setState("done");
+            }
+          });
 
         setState("playing");
       }, 300);
     },
-    [audioUrls, briefStories.length]
+    [audioUrls, briefStories.length, advanceOrFinish, scheduleFade]
   );
+
+  // Alias for external references
+  const playStory = playStoryAt;
 
   const playIntro = useCallback(
     (onDone: () => void) => {
@@ -167,14 +217,22 @@ export default function DailyBrief() {
   );
 
   const handlePause = useCallback(() => {
+    clearFade();
     audioRef.current?.pause();
+    if (audioRef.current) audioRef.current.volume = 1;
     setState("paused");
   }, []);
 
   const handleResume = useCallback(() => {
-    audioRef.current?.play();
+    const audio = audioRef.current;
+    if (!audio) return;
+    audio.play();
+    // Re-schedule fade if resuming a story (not intro) and still under the cap
+    if (storyIndex >= 0 && audio.currentTime < STORY_MAX_SECONDS - FADE_DURATION) {
+      scheduleFade(audio, storyIndex);
+    }
     setState(storyIndex === -1 ? "intro" : "playing");
-  }, [storyIndex]);
+  }, [storyIndex, scheduleFade]);
 
   const handlePlay = useCallback(() => {
     if (state === "idle" || state === "done") {
@@ -186,6 +244,8 @@ export default function DailyBrief() {
 
   const handleSkip = useCallback(() => {
     if (gapTimerRef.current) clearTimeout(gapTimerRef.current);
+    clearFade();
+    if (audioRef.current) audioRef.current.volume = 1;
     if (state === "intro" || storyIndex === -1) {
       audioRef.current?.pause();
       playStory(0);
@@ -230,7 +290,7 @@ export default function DailyBrief() {
         {/* ── IDLE STATE ── */}
         {state === "idle" && (
           <div className="flex flex-col items-center gap-6 animate-[fadeIn_0.4s_ease-out]">
-            <span className="text-[80px] leading-none select-none" style={{ fontFamily: "serif" }}>
+            <span className="text-[120px] leading-none select-none" style={{ fontFamily: "serif" }}>
               &#9678;
             </span>
             <div>
@@ -257,19 +317,24 @@ export default function DailyBrief() {
         {/* ── PLAYING / PAUSED STATE ── */}
         {isActive && (
           <div className="flex flex-col items-center gap-8 w-full max-w-sm animate-[fadeIn_0.3s_ease-out]">
-            {/* Small symbol at top */}
-            <span className="text-[36px] leading-none text-navy/30 select-none" style={{ fontFamily: "serif" }}>
+            {/* Symbol at top — pulses while audio is playing */}
+            <span
+              className={`text-[80px] leading-none text-navy/30 select-none ${
+                state === "playing" || state === "intro" ? "animate-[briefPulse_2s_ease-in-out_infinite]" : ""
+              }`}
+              style={{ fontFamily: "serif" }}
+            >
               &#9678;
             </span>
 
             {/* Current headline */}
-            <div className="min-h-[100px] flex items-center justify-center">
+            <div className="min-h-[120px] flex items-center justify-center">
               <h2
-                className={`text-xl sm:text-2xl font-bold text-navy leading-snug tracking-tight transition-opacity duration-300 ${
+                className={`font-bold text-navy leading-snug tracking-tight transition-opacity duration-300 ${
                   headlineVisible ? "opacity-100" : "opacity-0"
-                }`}
+                } ${isIntro ? "text-xl sm:text-2xl" : "text-base sm:text-lg"}`}
               >
-                {isIntro ? INTRO_TEXT : currentStory?.headline}
+                {isIntro ? INTRO_TEXT : currentStory?.summary}
               </h2>
             </div>
 
@@ -321,7 +386,7 @@ export default function DailyBrief() {
         {/* ── DONE STATE ── */}
         {state === "done" && (
           <div className="flex flex-col items-center gap-6 animate-[fadeIn_0.4s_ease-out]">
-            <span className="text-[80px] leading-none select-none" style={{ fontFamily: "serif" }}>
+            <span className="text-[120px] leading-none select-none" style={{ fontFamily: "serif" }}>
               &#9678;
             </span>
             <div>
