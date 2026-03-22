@@ -66,11 +66,12 @@ function DefinableText({
             return (
               <button
                 key={i}
+                type="button"
                 onClick={() => handleTap(match.word)}
-                className={`inline cursor-pointer border-b border-dotted transition-colors ${
+                className={`inline underline decoration-dotted underline-offset-2 cursor-pointer transition-colors ${
                   isActive
-                    ? "border-navy text-navy font-semibold"
-                    : "border-text-muted/50 text-text-primary hover:border-navy/50"
+                    ? "decoration-navy text-navy font-semibold decoration-2"
+                    : "decoration-text-muted/50 text-text-primary hover:decoration-navy/50"
                 }`}
               >
                 {part}
@@ -277,11 +278,11 @@ function useReadingProgress() {
 const CONFIDENCE_EXPLANATIONS = {
   green: {
     title: "High Confidence",
-    text: "This story has been confirmed by multiple independent sources. The key facts are well-established.",
+    text: "Every fact confirmed by multiple sources with different perspectives.",
   },
   yellow: {
-    title: "Developing Story",
-    text: "This story is still evolving. Some details may change as more information becomes available.",
+    title: "Developing",
+    text: "Some details still being confirmed or sources disagree.",
   },
 };
 
@@ -425,7 +426,7 @@ export default function StoryDetail() {
   return (
     <div className="min-h-dvh bg-warm-white pb-8">
       {/* Reading progress bar */}
-      <div className="fixed top-0 left-0 right-0 z-50 h-0.5">
+      <div className="fixed top-0 left-0 right-0 z-50 h-1">
         <div
           className={`h-full transition-all duration-150 ${isGreen ? "bg-confidence" : "bg-developing"}`}
           style={{ width: `${readingProgress}%` }}

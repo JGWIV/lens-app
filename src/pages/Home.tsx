@@ -160,9 +160,10 @@ function BottomNav() {
 
 function StoryCard({ story, onClick }: { story: Story; onClick: () => void }) {
   const isGreen = story.confidenceBadge === "green";
+  const [showBadgeTip, setShowBadgeTip] = useState(false);
 
   return (
-    <button
+    <div
       onClick={onClick}
       className="w-full text-left rounded-2xl border border-border bg-white p-4 hover:shadow-md hover:border-navy/20 transition-all duration-200 cursor-pointer active:scale-[0.99]"
     >
@@ -171,15 +172,37 @@ function StoryCard({ story, onClick }: { story: Story; onClick: () => void }) {
         <span className="text-xs font-medium text-text-secondary">
           {story.topic}
         </span>
-        <span
-          className={`ml-auto text-[10px] font-semibold px-2 py-0.5 rounded-full ${
-            isGreen
-              ? "bg-confidence-muted text-confidence"
-              : "bg-developing-muted text-developing"
-          }`}
-        >
-          {isGreen ? "Verified" : "Developing"}
-        </span>
+        <div className="ml-auto relative">
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              setShowBadgeTip(!showBadgeTip);
+            }}
+            className={`text-[10px] font-semibold px-2 py-0.5 rounded-full cursor-pointer transition-opacity hover:opacity-80 ${
+              isGreen
+                ? "bg-confidence-muted text-confidence"
+                : "bg-developing-muted text-developing"
+            }`}
+          >
+            {isGreen ? "Verified" : "Developing"}
+          </button>
+          {showBadgeTip && (
+            <div className="absolute right-0 top-full mt-1.5 w-60 rounded-xl bg-navy p-3 shadow-lg z-50 animate-[fadeIn_0.15s_ease-out]">
+              <div className="flex items-center gap-1.5 mb-1">
+                <span className={`w-1.5 h-1.5 rounded-full ${isGreen ? "bg-confidence" : "bg-developing"}`} />
+                <span className="text-[11px] font-semibold text-warm-white">
+                  {isGreen ? "High Confidence" : "Developing"}
+                </span>
+              </div>
+              <p className="text-xs text-warm-white/80 leading-relaxed">
+                {isGreen
+                  ? "Every fact confirmed by multiple sources with different perspectives."
+                  : "Some details still being confirmed or sources disagree."}
+              </p>
+            </div>
+          )}
+        </div>
       </div>
 
       <h3 className="text-[15px] font-semibold text-navy leading-snug mb-1.5">
@@ -197,7 +220,7 @@ function StoryCard({ story, onClick }: { story: Story; onClick: () => void }) {
           Read &rarr;
         </span>
       </div>
-    </button>
+    </div>
   );
 }
 
@@ -252,16 +275,20 @@ export default function Home() {
   const allowedAgeGates = getAgeGateAllowed(readerLevel);
   const levelKey = readerLevel === "young" ? "young" : readerLevel === "teen" ? "teen" : "adult" as const;
 
-  const filteredStories = stories.filter(
-    (s) =>
-      allowedAgeGates.includes(s.ageGate) &&
-      (selectedTopics.length === 0 || selectedTopics.includes(s.topic))
-  );
+  const filteredStories = stories
+    .filter(
+      (s) =>
+        allowedAgeGates.includes(s.ageGate) &&
+        (selectedTopics.length === 0 || selectedTopics.includes(s.topic))
+    )
+    .sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime());
 
   const showBriefing = newsMode === "listen" || newsMode === "both";
 
-  // Build briefing audio URLs from top stories
-  const briefingStories = filteredStories.slice(0, 5);
+  // Build briefing audio URLs from top stories (ordered by source count)
+  const briefingStories = [...filteredStories]
+    .sort((a, b) => b.sources.confirming.length - a.sources.confirming.length)
+    .slice(0, 5);
   const briefingAudioUrls = briefingStories
     .map((s) => s.audio[levelKey]?.[voiceKey] ?? "")
     .filter((url) => url !== "");
@@ -303,7 +330,7 @@ export default function Home() {
         {/* Greeting */}
         <div className="pt-5 pb-4">
           <h2 className="text-xl sm:text-2xl font-semibold tracking-tight text-navy">
-            {getGreeting()}, Reader
+            {getGreeting()}
           </h2>
         </div>
 
