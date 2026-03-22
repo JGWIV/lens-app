@@ -25,8 +25,15 @@ function formatTime(seconds: number): string {
 type BriefState = "idle" | "intro" | "playing" | "paused" | "done";
 
 const INTRO_TEXT = "Welcome to your Lens Daily Brief. Here are today's top stories.";
-const STORY_MAX_SECONDS = 20;
-const FADE_DURATION = 1.5; // seconds for volume fade-out
+
+// Fixed editorial order for the demo brief
+const BRIEF_IDS = [
+  "oil-prices-strait-hormuz-2026",
+  "russia-ukraine-war-2026",
+  "measles-vaccines-federal-policy-2026",
+  "new-food-pyramid-2026",
+  "2026-midterm-elections",
+];
 
 /* ── Daily Brief Page ── */
 
@@ -36,39 +43,25 @@ export default function DailyBrief() {
   const voiceKey = (prefs?.voice ?? "anchor") as VoiceId;
   const voiceMeta = VOICE_OPTIONS.find((v) => v.value === voiceKey);
   const voiceName = voiceMeta?.name ?? "The Anchor";
-  const readerLevel = (prefs?.readerLevel ?? "adult") as "young" | "teen" | "adult";
 
-  // Fixed editorial order for the demo brief
-  const BRIEF_IDS = [
-    "oil-prices-strait-hormuz-2026",
-    "russia-ukraine-war-2026",
-    "measles-vaccines-federal-policy-2026",
-    "new-food-pyramid-2026",
-    "2026-midterm-elections",
-  ];
   const briefStories = BRIEF_IDS
     .map((id) => stories.find((s) => s.id === id))
     .filter((s): s is NonNullable<typeof s> => s != null);
 
+  // Use brief audio files (summary-length)
   const audioUrls = briefStories.map(
-    (s) => s.audio[readerLevel]?.[voiceKey] ?? ""
+    (s) => `/audio/${s.id}_brief_${voiceKey}.mp3`
   );
+
+  const introSrc = `/audio/daily-brief-intro_${voiceKey}.mp3`;
 
   const [state, setState] = useState<BriefState>("idle");
   const [storyIndex, setStoryIndex] = useState(-1); // -1 = intro
   const [duration, setDuration] = useState(0);
   const [currentTime, setCurrentTime] = useState(0);
   const [headlineVisible, setHeadlineVisible] = useState(true);
-  const introSrc = `/audio/daily-brief-intro_${voiceKey}.mp3`;
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const gapTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const fadeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const fadeIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-
-  function clearFade() {
-    if (fadeTimerRef.current) { clearTimeout(fadeTimerRef.current); fadeTimerRef.current = null; }
-    if (fadeIntervalRef.current) { clearInterval(fadeIntervalRef.current); fadeIntervalRef.current = null; }
-  }
 
   // Cleanup on unmount
   useEffect(() => {
@@ -76,121 +69,72 @@ export default function DailyBrief() {
       audioRef.current?.pause();
       audioRef.current = null;
       if (gapTimerRef.current) clearTimeout(gapTimerRef.current);
-      clearFade();
     };
   }, []);
 
-  const advanceOrFinish = useCallback(
+  const playStory = useCallback(
     (index: number) => {
-      if (index < briefStories.length - 1) {
-        gapTimerRef.current = setTimeout(() => playStoryAt(index + 1), 1000);
-      } else {
-        setState("done");
-      }
-    },
-    [briefStories.length]
-  );
-
-  // Start fade-out at (STORY_MAX_SECONDS - FADE_DURATION), then pause at STORY_MAX_SECONDS
-  const scheduleFade = useCallback(
-    (audio: HTMLAudioElement, index: number) => {
-      clearFade();
-      const fadeStart = (STORY_MAX_SECONDS - FADE_DURATION) * 1000;
-
-      fadeTimerRef.current = setTimeout(() => {
-        // Gradually reduce volume over FADE_DURATION
-        const steps = 15;
-        const stepMs = (FADE_DURATION * 1000) / steps;
-        let step = 0;
-        fadeIntervalRef.current = setInterval(() => {
-          step++;
-          audio.volume = Math.max(0, 1 - step / steps);
-          if (step >= steps) {
-            clearFade();
-            audio.pause();
-            audio.volume = 1;
-            advanceOrFinish(index);
-          }
-        }, stepMs);
-      }, fadeStart);
-    },
-    [advanceOrFinish]
-  );
-
-  // We need a stable ref for the recursive function
-  const playStoryAt = useCallback(
-    (index: number) => {
-      // Fade out current headline
       setHeadlineVisible(false);
-      clearFade();
 
       const src = audioUrls[index];
       if (!src) {
         if (index < briefStories.length - 1) {
-          playStoryAt(index + 1);
+          playStory(index + 1);
         } else {
           setState("done");
         }
         return;
       }
 
-      // Small delay for headline transition
+      // Small delay for headline fade transition
       setTimeout(() => {
         setStoryIndex(index);
         setHeadlineVisible(true);
 
-        if (audioRef.current) {
-          audioRef.current.pause();
-        }
+        if (audioRef.current) audioRef.current.pause();
 
         const audio = new Audio(src);
         audioRef.current = audio;
-        audio.volume = 1;
         setDuration(0);
         setCurrentTime(0);
 
         audio.addEventListener("loadedmetadata", () => {
-          // Show the capped duration
-          setDuration(Math.min(audio.duration, STORY_MAX_SECONDS));
+          setDuration(audio.duration);
         });
 
         audio.addEventListener("timeupdate", () => {
-          setCurrentTime(Math.min(audio.currentTime, STORY_MAX_SECONDS));
+          setCurrentTime(audio.currentTime);
         });
 
         audio.addEventListener("ended", () => {
-          // If audio is shorter than cap, advance normally
-          clearFade();
-          advanceOrFinish(index);
-        });
-
-        audio.addEventListener("error", () => {
-          clearFade();
           if (index < briefStories.length - 1) {
-            playStoryAt(index + 1);
+            gapTimerRef.current = setTimeout(() => playStory(index + 1), 1000);
           } else {
             setState("done");
           }
         });
 
-        audio.play()
-          .then(() => scheduleFade(audio, index))
-          .catch(() => {
-            if (index < briefStories.length - 1) {
-              playStoryAt(index + 1);
-            } else {
-              setState("done");
-            }
-          });
+        audio.addEventListener("error", () => {
+          if (index < briefStories.length - 1) {
+            playStory(index + 1);
+          } else {
+            setState("done");
+          }
+        });
+
+        audio.play().catch(() => {
+          if (index < briefStories.length - 1) {
+            playStory(index + 1);
+          } else {
+            setState("done");
+          }
+        });
 
         setState("playing");
       }, 300);
     },
-    [audioUrls, briefStories.length, advanceOrFinish, scheduleFade]
+    [audioUrls, briefStories.length]
   );
-
-  // Alias for external references
-  const playStory = playStoryAt;
 
   const playIntro = useCallback(
     (onDone: () => void) => {
@@ -217,22 +161,14 @@ export default function DailyBrief() {
   );
 
   const handlePause = useCallback(() => {
-    clearFade();
     audioRef.current?.pause();
-    if (audioRef.current) audioRef.current.volume = 1;
     setState("paused");
   }, []);
 
   const handleResume = useCallback(() => {
-    const audio = audioRef.current;
-    if (!audio) return;
-    audio.play();
-    // Re-schedule fade if resuming a story (not intro) and still under the cap
-    if (storyIndex >= 0 && audio.currentTime < STORY_MAX_SECONDS - FADE_DURATION) {
-      scheduleFade(audio, storyIndex);
-    }
+    audioRef.current?.play();
     setState(storyIndex === -1 ? "intro" : "playing");
-  }, [storyIndex, scheduleFade]);
+  }, [storyIndex]);
 
   const handlePlay = useCallback(() => {
     if (state === "idle" || state === "done") {
@@ -244,8 +180,6 @@ export default function DailyBrief() {
 
   const handleSkip = useCallback(() => {
     if (gapTimerRef.current) clearTimeout(gapTimerRef.current);
-    clearFade();
-    if (audioRef.current) audioRef.current.volume = 1;
     if (state === "intro" || storyIndex === -1) {
       audioRef.current?.pause();
       playStory(0);
@@ -308,8 +242,8 @@ export default function DailyBrief() {
                 <path d="M6.3 2.84A1.5 1.5 0 004 4.11v11.78a1.5 1.5 0 002.3 1.27l9.344-5.891a1.5 1.5 0 000-2.538L6.3 2.841z" />
               </svg>
             </button>
-            <p className="text-xs text-text-muted/70 max-w-[240px]">
-              {briefStories.length} stories. ~{briefStories.length} minutes. Everything that matters.
+            <p className="text-xs text-text-muted/70">
+              The facts, briefly.
             </p>
           </div>
         )}
@@ -327,7 +261,7 @@ export default function DailyBrief() {
               &#9678;
             </span>
 
-            {/* Current headline */}
+            {/* Current summary text */}
             <div className="min-h-[120px] flex items-center justify-center">
               <h2
                 className={`font-bold text-navy leading-snug tracking-tight transition-opacity duration-300 ${
