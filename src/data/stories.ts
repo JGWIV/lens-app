@@ -98,7 +98,7 @@ export const stories: Story[] = [
     readingLevels: {
       young: {
         whatHappened:
-          "The US government released new rules about what Americans should eat. These rules are called the Dietary Guidelines. They come with a picture called the food pyramid that shows which foods are most important. The new pyramid is flipped upside down compared to old ones. The foods at the wide top are the ones the government says to eat the most. Those foods are protein — like meat, eggs, fish, and beans — along with vegetables, fruits, and dairy like milk and cheese. At the narrow bottom are grains, like bread and pasta. The government says to eat fewer processed foods. Processed foods are things made in factories with lots of added sugar, artificial flavors, or ingredients that are hard to pronounce. Health Secretary Robert F. Kennedy Jr. announced the guidelines. He said the most important message is simple: eat real food.",
+          "The US government released new rules about what Americans should eat. These rules are called the Dietary Guidelines. They come with a picture called the food pyramid that shows which foods are most important. The new pyramid is flipped upside down compared to old ones. The foods at the wide top are the ones the government says to eat the most. Those foods are protein — like meat, eggs, fish, and beans — along with vegetables, fruits, and dairy like milk and cheese. At the narrow bottom are grains, like bread and pasta. The government says to eat fewer processed foods. Processed foods are things made in factories with lots of added sugar, artificial flavors, or ingredients that are hard to pronounce. Health Secretary Robert F. Kennedy Jr. announced the guidelines. He said the most important message is simple: eat real food — meaning foods that come from farms and nature, like meat, vegetables, fruit, eggs, and dairy, rather than packaged foods made in factories.",
         whyItMatters:
           "These guidelines affect what food is served in school lunches across the United States. They also affect what doctors tell patients to eat and what food companies put in their products. The last time these rules changed was five years ago. Many kids and adults eat a lot of processed foods like chips, cookies, and sugary drinks. Scientists have linked those foods to health problems. The new guidelines say to cut back on them.",
         whatPeopleThink: [
@@ -115,7 +115,7 @@ export const stories: Story[] = [
           },
         ],
         whatWeDontKnow:
-          "Scientists are still studying whether the new guidelines will make Americans healthier over time. It is also unclear exactly how school lunch programs will change as a result.",
+          "Scientists are still studying whether the new guidelines will make Americans healthier over time. Schools will likely update their lunch menus gradually — it is not yet clear exactly how quickly those changes will happen or what they will look like.",
         tapToDefine: [
           {
             word: "dietary guidelines",
@@ -267,6 +267,10 @@ export const stories: Story[] = [
       {
         label: "Harvard Chan School analysis",
         url: "https://hsph.harvard.edu/news/understanding-the-new-dietary-guidelines-for-americans/",
+      },
+      {
+        label: "Previous 2020-2025 Dietary Guidelines for comparison",
+        url: "https://www.dietaryguidelines.gov/2020-2025-dietary-guidelines",
       },
     ],
     audio: {
@@ -452,22 +456,15 @@ export const stories: Story[] = [
     },
     sources: {
       confirming: [
-        { name: "NBC News", type: "Broadcast / National" },
-        { name: "Al Jazeera", type: "International" },
-        { name: "Houston Public Media / NPR", type: "Public Media" },
+        { name: "Fox News", type: "Broadcast / Right-leaning" },
+        { name: "NBC News", type: "Broadcast / Center" },
+        { name: "Houston Public Media / NPR", type: "Public Media / Regional" },
         { name: "Ballotpedia", type: "Nonpartisan Elections Reference" },
-        { name: "Emerson College Polling", type: "Independent Pollster" },
-        {
-          name: "Public Policy Polling",
-          type: "Pollster — Democratic-affiliated, disclosed",
-        },
-        {
-          name: "Texas Public Opinion Research",
-          type: "Pollster — Republican-affiliated, disclosed",
-        },
+        { name: "The Hill", type: "Political News / Center" },
+        { name: "Al Jazeera", type: "International" },
       ],
       methodology:
-        "This story was built from 7 sources across national broadcast media, international outlets, nonpartisan reference sources, and polling firms representing both partisan affiliations. All polling sources are disclosed with their affiliation. Primary election results are certified and confirmed by multiple outlets. Perspective balance reflects three distinct positions: Democratic optimism, Republican skepticism, and neutral structural analysis.",
+        "This story was built from 6 sources across right-leaning broadcast, center broadcast, public media, nonpartisan reference, and international outlets. Fox News provided extensive primary night coverage and Republican candidate interviews. Primary results confirmed by multiple outlets. Polling sources disclosed with partisan affiliations.",
     },
     goDeeper: [
       {
@@ -505,7 +502,7 @@ export const stories: Story[] = [
   },
   {
     id: "2026-midterm-elections",
-    headline: "Americans Will Vote for All of Congress in November 2026",
+    headline: "Americans Will Vote for Congress in November 2026 — and Control of Both Chambers Is at Stake",
     summary:
       "On November 3, 2026, voters across the United States will elect all 435 members of the House of Representatives and 35 senators, with control of both chambers of Congress at stake.",
     topic: "Government & Politics",
@@ -870,14 +867,14 @@ export const stories: Story[] = [
     },
     sources: {
       confirming: [
-        { name: "CNN Politics", type: "National Broadcast / Left-center" },
-        { name: "ABC News", type: "National Broadcast / Center" },
-        { name: "The Daily Caller", type: "Digital / Right-leaning" },
+        { name: "CNN Politics", type: "Broadcast / Left-center" },
+        { name: "ABC News", type: "Broadcast / Center" },
+        { name: "The Hill", type: "Political News / Center" },
+        { name: "Fox News", type: "Broadcast / Right-leaning" },
         { name: "The Intercept", type: "Investigative / Left-leaning" },
-        { name: "Silicon Valley / McClatchy", type: "Regional / Wire" },
       ],
       methodology:
-        "This story was built from 5 sources spanning left-leaning, center, and right-leaning outlets. The core facts — DOGE claimed savings figures, war cost estimates, specific agency vacancies, and the DISA memo — are confirmed across multiple sources. Named and anonymous official accounts are attributed appropriately. The confidence badge is yellow because some key claims rely on anonymous current and former officials whose accounts cannot be independently verified, and because the causal relationship between cuts and specific response gaps is contested.",
+        "This story was built from 5 sources spanning left-leaning, center, and right-leaning outlets. Core facts confirmed across CNN, ABC, and Fox News. The Intercept provided the Pentagon DISA memo. Named officials quoted from press conferences and on-record statements. Confidence badge is yellow because key claims rely on anonymous current and former officials whose accounts cannot be independently verified.",
     },
     goDeeper: [
       {
@@ -1483,28 +1480,15 @@ export const stories: Story[] = [
     },
     sources: {
       confirming: [
-        { name: "AP / NPR affiliates", type: "Wire Service / Public Media" },
+        { name: "AP / NPR", type: "Wire Service / Public Media" },
+        { name: "Reuters", type: "Wire Service / International" },
         { name: "Al Jazeera", type: "International" },
+        { name: "BBC", type: "International Broadcast" },
         { name: "Euronews", type: "International / European" },
-        {
-          name: "RFE/RL via GlobalSecurity",
-          type: "Independent / US-funded International Broadcasting",
-        },
-        {
-          name: "House of Commons Library",
-          type: "Government Research / UK Parliament",
-        },
-        {
-          name: "The Moscow Times",
-          type: "Independent Russian-language outlet",
-        },
-        {
-          name: "Atlantic Council",
-          type: "Think Tank / Western policy analysis",
-        },
+        { name: "RFE/RL", type: "Independent / US-funded International Broadcasting" },
       ],
       methodology:
-        "This story was built from 7 sources across wire services, international broadcasters, independent Russian-language journalism, Western parliamentary research, and policy analysis. Battlefield assessments reference ISW data as reported across multiple outlets. Both Russian and Ukrainian official statements are included and attributed. The Moscow Times is an independent outlet that operates outside Russia and is designated 'undesirable' by Russian authorities — included specifically to provide a non-Kremlin Russian-language perspective. Confidence badge is green: all core diplomatic and military facts are confirmed across multiple independent outlets.",
+        "This story was built from 6 sources across wire services, public media, and international broadcasting. Battlefield assessments reference ISW data as reported across multiple outlets. Both Russian and Ukrainian official statements included and attributed. RFE/RL included for its independent reporting on Eastern European affairs. Confidence badge is green: all core diplomatic and military facts confirmed across multiple independent outlets.",
     },
     goDeeper: [
       {
@@ -1905,20 +1889,13 @@ export const stories: Story[] = [
       confirming: [
         { name: "Axios", type: "Digital News / Center" },
         { name: "Time Magazine", type: "National Magazine / Center" },
-        { name: "NBC News", type: "National Broadcast / Center" },
+        { name: "NBC News", type: "Broadcast / Center" },
         { name: "The Hill", type: "Political News / Center" },
-        { name: "Healthline", type: "Health Media / Fact-checked" },
-        {
-          name: "Stateline / Pew",
-          type: "Nonpartisan State Policy Journalism",
-        },
-        {
-          name: "National Health Law Program",
-          type: "Legal / Public Health Policy",
-        },
+        { name: "PBS NewsHour", type: "Public Media / Center" },
+        { name: "Stateline / Pew", type: "Nonpartisan State Policy Journalism" },
       ],
       methodology:
-        "This story was built from 7 sources across health journalism, nonpartisan policy reporting, and legal analysis. Case counts are from CDC data as reported across multiple outlets. Vaccination rate figures are from CDC kindergarten survey data confirmed by multiple outlets. Named scientific claims — including the MMR vaccine's lifelong protection mechanism — are attributed to credentialed physicians at named institutions. Kennedy's statements are quoted from public interviews and official HHS communications and fact-checked against CDC and independent scientific sources. Confidence badge is green: all core public health facts are confirmed by multiple independent sources and the CDC's own data.",
+        "This story was built from 6 sources across public media, health journalism, and nonpartisan policy reporting. Case counts from CDC data confirmed across multiple outlets. Vaccination rate figures from CDC kindergarten survey data. Named scientific claims attributed to credentialed physicians at named institutions. Kennedy statements fact-checked against CDC and independent scientific sources. Confidence badge is green: all core public health facts confirmed by multiple independent sources and CDC data.",
     },
     goDeeper: [
       {
@@ -2119,16 +2096,13 @@ export const stories: Story[] = [
       confirming: [
         { name: "PBS NewsHour", type: "Public Media / Center" },
         { name: "Al Jazeera", type: "International" },
+        { name: "Reuters", type: "Wire Service / International" },
+        { name: "BBC", type: "International Broadcast" },
         { name: "Euronews", type: "International / European" },
-        {
-          name: "Washington Times",
-          type: "National Print / Right-leaning",
-        },
-        { name: "Army Recognition", type: "Defense Industry / Technical" },
-        { name: "Outlook India", type: "International / South Asian" },
+        { name: "Washington Times", type: "National Print / Right-leaning" },
       ],
       methodology:
-        "This story was built from 6 sources spanning public media, international broadcasting, right-leaning national print, defense technical reporting, and South Asian international coverage. Launch facts — number of missiles, origin site, distance traveled, landing location — are confirmed by South Korean Joint Chiefs of Staff statements reported across multiple outlets. Kim Yo Jong's statement is confirmed by multiple sources. The Iran-Patriot redeployment detail is from Zee News / Indian defense reporting and has not been independently confirmed by US or South Korean officials — it is therefore presented as reported, not confirmed fact. Confidence badge is green for the core launch facts; the Patriot detail is appropriately hedged in text.",
+        "This story was built from 6 sources across wire services, public media, international broadcasting, and right-leaning national print. Launch facts confirmed by South Korean Joint Chiefs of Staff statements reported across all sources. Kim Yo Jong statement confirmed by multiple outlets. Washington Times provided conservative framing and operational detail on Freedom Shield exercises. Confidence badge is green: all core launch facts confirmed by multiple independent sources.",
     },
     goDeeper: [
       {
@@ -2536,19 +2510,13 @@ export const stories: Story[] = [
     sources: {
       confirming: [
         { name: "Reuters", type: "Wire Service / International" },
-        { name: "NBC News", type: "National Broadcast / Center" },
+        { name: "NBC News", type: "Broadcast / Center" },
         { name: "Al Jazeera", type: "International" },
-        {
-          name: "CiberCuba",
-          type: "Independent Cuban Journalism / Diaspora",
-        },
-        {
-          name: "US News / Reuters wire",
-          type: "Wire Service / Aggregated",
-        },
+        { name: "BBC", type: "International Broadcast" },
+        { name: "AFP", type: "Wire Service / International" },
       ],
       methodology:
-        "This story was built from 5 sources across wire services, international broadcasting, and independent Cuban diaspora journalism. Reuters verified the location of at least one social media video but could not confirm the exact date. The confidence badge is yellow because independent verification of events inside Cuba is structurally limited by state control of media and internet — the number of protesters, extent of damage, and full aftermath are unconfirmed. Cuban government statements are attributed to official Cuban state media (Invasor newspaper) and Díaz-Canel's official social media. CiberCuba is an independent Cuban news outlet operating in exile — included specifically because it provides reporting from outside the Cuban government's media framework. All three ideological perspectives are drawn from named sources.",
+        "This story was built from 5 sources across wire services and international broadcasting. Reuters verified the location of at least one social media video but could not confirm the exact date. AFP and BBC provided additional international coverage. Confidence badge is yellow because independent verification of events inside Cuba is structurally limited by state control of media — number of protesters and full aftermath unconfirmed. Cuban government statements attributed to official state media and President Díaz-Canel's official social media.",
     },
     goDeeper: [
       {
