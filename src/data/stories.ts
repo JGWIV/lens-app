@@ -456,15 +456,15 @@ export const stories: Story[] = [
     },
     sources: {
       confirming: [
+        { name: "AP", type: "Wire Service" },
         { name: "Fox News", type: "Broadcast / Right-leaning" },
         { name: "NBC News", type: "Broadcast / Center" },
-        { name: "Houston Public Media / NPR", type: "Public Media / Regional" },
+        { name: "Dallas Morning News", type: "Regional / Texas" },
+        { name: "Houston Chronicle", type: "Regional / Texas" },
         { name: "Ballotpedia", type: "Nonpartisan Elections Reference" },
-        { name: "The Hill", type: "Political News / Center" },
-        { name: "Al Jazeera", type: "International" },
       ],
       methodology:
-        "This story was built from 6 sources across right-leaning broadcast, center broadcast, public media, nonpartisan reference, and international outlets. Fox News provided extensive primary night coverage and Republican candidate interviews. Primary results confirmed by multiple outlets. Polling sources disclosed with partisan affiliations.",
+        "This story was built from 6 sources across wire services, right-leaning and center broadcast, two major Texas regional newspapers, and a nonpartisan elections reference. AP provided primary election results. Fox News provided Republican candidate interviews and conservative framing. Dallas Morning News and Houston Chronicle provided Texas-specific reporting and local context. Primary results confirmed by multiple outlets.",
     },
     goDeeper: [
       {

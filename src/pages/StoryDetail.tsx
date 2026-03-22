@@ -424,6 +424,7 @@ export default function StoryDetail() {
   const voiceName = voiceMeta?.name ?? "The Anchor";
   const audioSrc = story.audio[levelKey]?.[voiceKey] ?? "";
   const showAudio = newsMode === "listen" || newsMode === "both";
+  const autoPlayAudio = newsMode === "listen";
 
   return (
     <div className="min-h-dvh bg-warm-white pb-8">
@@ -468,7 +469,7 @@ export default function StoryDetail() {
 
         {/* Audio Player */}
         {showAudio && audioSrc && (
-          <AudioPlayer src={audioSrc} voiceName={voiceName} />
+          <AudioPlayer src={audioSrc} voiceName={voiceName} autoPlay={autoPlayAudio} />
         )}
 
         {/* Tab bar */}

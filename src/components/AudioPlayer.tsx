@@ -11,15 +11,17 @@ interface AudioPlayerProps {
   src: string;
   voiceName: string;
   compact?: boolean;
+  autoPlay?: boolean;
 }
 
-export default function AudioPlayer({ src, voiceName, compact }: AudioPlayerProps) {
+export default function AudioPlayer({ src, voiceName, compact, autoPlay }: AudioPlayerProps) {
   const audioRef = useRef<HTMLAudioElement>(null);
   const [playing, setPlaying] = useState(false);
   const [duration, setDuration] = useState(0);
   const [currentTime, setCurrentTime] = useState(0);
   const [error, setError] = useState(false);
   const [loading, setLoading] = useState(true);
+  const autoPlayTriggered = useRef(false);
 
   useEffect(() => {
     // Reset state when src changes
@@ -28,6 +30,7 @@ export default function AudioPlayer({ src, voiceName, compact }: AudioPlayerProp
     setDuration(0);
     setError(false);
     setLoading(true);
+    autoPlayTriggered.current = false;
     if (audioRef.current) {
       audioRef.current.pause();
       audioRef.current.load();
@@ -38,8 +41,15 @@ export default function AudioPlayer({ src, voiceName, compact }: AudioPlayerProp
     if (audioRef.current) {
       setDuration(audioRef.current.duration);
       setLoading(false);
+
+      if (autoPlay && !autoPlayTriggered.current) {
+        autoPlayTriggered.current = true;
+        audioRef.current.play()
+          .then(() => setPlaying(true))
+          .catch(() => setError(true));
+      }
     }
-  }, []);
+  }, [autoPlay]);
 
   const handleTimeUpdate = useCallback(() => {
     if (audioRef.current) {

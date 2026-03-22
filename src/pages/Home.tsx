@@ -319,7 +319,7 @@ export default function Home() {
       <header className="sticky top-0 z-30 bg-warm-white/95 backdrop-blur-sm border-b border-border">
         <div className="flex items-center justify-between px-page py-3 max-w-lg mx-auto">
           <h1 className="lens-wordmark text-xl">lens.</h1>
-          <span className="flex items-center gap-1.5 text-[11px] font-semibold text-confidence bg-confidence-muted px-2.5 py-1 rounded-full animate-badge-pulse">
+          <span className="flex items-center gap-1.5 text-[11px] font-semibold text-confidence bg-confidence-muted px-2.5 py-1 rounded-full select-none">
             <span className="w-1.5 h-1.5 rounded-full bg-confidence" />
             Bias Filter ON
           </span>
