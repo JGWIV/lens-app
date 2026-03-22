@@ -504,7 +504,7 @@ export const stories: Story[] = [
     id: "2026-midterm-elections",
     headline: "Americans Will Vote for Congress in November 2026 — and Control of Both Chambers Is at Stake",
     summary:
-      "On November 3, 2026, voters across the United States will elect all 435 members of the House of Representatives and 35 senators, with control of both chambers of Congress at stake.",
+      "On November 3, 2026, voters will elect members of Congress across all 50 states, with control of both the House and Senate at stake.",
     topic: "Government & Politics",
     topicIcon: "🗳️",
     confidenceBadge: "green",
@@ -1332,7 +1332,7 @@ export const stories: Story[] = [
     headline:
       "The War in Ukraine Continues as Peace Talks Stall and the World's Attention Shifts",
     summary:
-      "More than four years after Russia invaded Ukraine, the fighting continues, US-brokered peace negotiations have stalled, and the Iran war has drawn international attention away from Europe — a situation Russia appears to be watching closely.",
+      "More than four years after Russia invaded Ukraine, the fighting continues, US-brokered peace negotiations have stalled, and the Iran war has drawn international attention away from Europe.",
     topic: "World News",
     topicIcon: "🌍",
     confidenceBadge: "green",
