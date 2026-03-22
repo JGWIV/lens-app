@@ -34,6 +34,7 @@ export default function DailyBrief() {
   const voiceKey = (prefs?.voice ?? "anchor") as VoiceId;
   const voiceMeta = VOICE_OPTIONS.find((v) => v.value === voiceKey);
   const voiceName = voiceMeta?.name ?? "The Anchor";
+  const readerLevel = (prefs?.readerLevel ?? "adult") as "young" | "teen" | "adult";
 
   // Fixed editorial order for the demo brief
   const BRIEF_IDS = [
@@ -48,7 +49,7 @@ export default function DailyBrief() {
     .filter((s): s is NonNullable<typeof s> => s != null);
 
   const audioUrls = briefStories.map(
-    (s) => s.audio.young?.[voiceKey] ?? ""
+    (s) => s.audio[readerLevel]?.[voiceKey] ?? ""
   );
 
   const [state, setState] = useState<BriefState>("idle");
