@@ -56,9 +56,9 @@ export default function DailyBrief() {
   const [duration, setDuration] = useState(0);
   const [currentTime, setCurrentTime] = useState(0);
   const [headlineVisible, setHeadlineVisible] = useState(true);
+  const introSrc = `/audio/daily-brief-intro_${voiceKey}.mp3`;
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const gapTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -66,7 +66,6 @@ export default function DailyBrief() {
       audioRef.current?.pause();
       audioRef.current = null;
       if (gapTimerRef.current) clearTimeout(gapTimerRef.current);
-      window.speechSynthesis?.cancel();
     };
   }, []);
 
@@ -142,71 +141,52 @@ export default function DailyBrief() {
     [audioUrls, briefStories.length]
   );
 
-  const speakIntro = useCallback(
+  const playIntro = useCallback(
     (onDone: () => void) => {
-      if (!window.speechSynthesis) {
-        onDone();
-        return;
-      }
+      if (audioRef.current) audioRef.current.pause();
 
-      window.speechSynthesis.cancel();
-      const utterance = new SpeechSynthesisUtterance(INTRO_TEXT);
-      utterance.rate = 0.95;
-      utterance.pitch = 1;
-      utteranceRef.current = utterance;
-
-      utterance.onend = () => {
-        utteranceRef.current = null;
-        gapTimerRef.current = setTimeout(onDone, 1000);
-      };
-
-      utterance.onerror = () => {
-        utteranceRef.current = null;
-        onDone();
-      };
-
+      const audio = new Audio(introSrc);
+      audioRef.current = audio;
       setStoryIndex(-1);
       setHeadlineVisible(true);
       setDuration(0);
       setCurrentTime(0);
       setState("intro");
-      window.speechSynthesis.speak(utterance);
+
+      audio.addEventListener("loadedmetadata", () => setDuration(audio.duration));
+      audio.addEventListener("timeupdate", () => setCurrentTime(audio.currentTime));
+      audio.addEventListener("ended", () => {
+        gapTimerRef.current = setTimeout(onDone, 1000);
+      });
+      audio.addEventListener("error", () => onDone());
+
+      audio.play().catch(() => onDone());
     },
-    []
+    [introSrc]
   );
 
   const handlePause = useCallback(() => {
-    if (state === "intro") {
-      window.speechSynthesis?.pause();
-    } else {
-      audioRef.current?.pause();
-    }
+    audioRef.current?.pause();
     setState("paused");
-  }, [state]);
+  }, []);
 
   const handleResume = useCallback(() => {
-    if (storyIndex === -1) {
-      window.speechSynthesis?.resume();
-      setState("intro");
-    } else {
-      audioRef.current?.play();
-      setState("playing");
-    }
+    audioRef.current?.play();
+    setState(storyIndex === -1 ? "intro" : "playing");
   }, [storyIndex]);
 
   const handlePlay = useCallback(() => {
     if (state === "idle" || state === "done") {
-      speakIntro(() => playStory(0));
+      playIntro(() => playStory(0));
     } else if (state === "paused") {
       handleResume();
     }
-  }, [state, playStory, speakIntro, handleResume]);
+  }, [state, playStory, playIntro, handleResume]);
 
   const handleSkip = useCallback(() => {
     if (gapTimerRef.current) clearTimeout(gapTimerRef.current);
     if (state === "intro" || storyIndex === -1) {
-      window.speechSynthesis?.cancel();
-      utteranceRef.current = null;
+      audioRef.current?.pause();
       playStory(0);
       return;
     }
@@ -219,8 +199,8 @@ export default function DailyBrief() {
   }, [state, storyIndex, briefStories.length, playStory]);
 
   const handleReplay = useCallback(() => {
-    speakIntro(() => playStory(0));
-  }, [speakIntro, playStory]);
+    playIntro(() => playStory(0));
+  }, [playIntro, playStory]);
 
   const progress = duration > 0 ? (currentTime / duration) * 100 : 0;
   const isActive = state === "playing" || state === "paused" || state === "intro";
@@ -330,12 +310,10 @@ export default function DailyBrief() {
               </button>
             </div>
 
-            {/* Time display (hidden during intro — Web Speech has no duration) */}
-            {!isIntro && (
-              <p className="text-[11px] text-text-muted/60">
-                {formatTime(currentTime)} / {duration > 0 ? formatTime(duration) : "--:--"}
-              </p>
-            )}
+            {/* Time display */}
+            <p className="text-[11px] text-text-muted/60">
+              {formatTime(currentTime)} / {duration > 0 ? formatTime(duration) : "--:--"}
+            </p>
           </div>
         )}
 
