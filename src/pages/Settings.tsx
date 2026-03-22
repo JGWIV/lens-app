@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   loadPreferences,
@@ -89,6 +89,40 @@ export default function Settings() {
   function handleVoice(v: VoiceId) {
     setVoice(v);
     persist({ voice: v });
+  }
+
+  const previewAudioRef = useRef<HTMLAudioElement | null>(null);
+  const [playingVoice, setPlayingVoice] = useState<VoiceId | null>(null);
+
+  useEffect(() => {
+    return () => {
+      previewAudioRef.current?.pause();
+      previewAudioRef.current = null;
+    };
+  }, []);
+
+  function handlePreview(e: React.MouseEvent, voiceId: VoiceId) {
+    e.stopPropagation();
+
+    if (playingVoice === voiceId) {
+      previewAudioRef.current?.pause();
+      previewAudioRef.current = null;
+      setPlayingVoice(null);
+      return;
+    }
+
+    previewAudioRef.current?.pause();
+
+    const audio = new Audio(`/audio/potomac-sewage-spill-2026_young_${voiceId}.mp3`);
+    previewAudioRef.current = audio;
+    setPlayingVoice(voiceId);
+
+    audio.addEventListener("ended", () => {
+      setPlayingVoice(null);
+      previewAudioRef.current = null;
+    });
+
+    audio.play();
   }
 
   function handleReset() {
@@ -244,10 +278,22 @@ export default function Settings() {
                           {v.description}
                         </span>
                       </div>
-                      <span className={`text-xs font-medium px-2.5 py-1 rounded-full shrink-0 ml-3 ${
-                        isSelected ? "bg-warm-white/20 text-warm-white" : "bg-warm-gray text-text-secondary"
-                      }`}>
-                        Preview
+                      <span
+                        role="button"
+                        tabIndex={0}
+                        onClick={(e) => handlePreview(e, v.value)}
+                        onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") handlePreview(e as unknown as React.MouseEvent, v.value); }}
+                        className={`text-xs font-medium px-2.5 py-1 rounded-full shrink-0 ml-3 transition-all duration-200 ${
+                          playingVoice === v.value
+                            ? isSelected
+                              ? "bg-warm-white/30 text-warm-white ring-2 ring-warm-white/40"
+                              : "bg-navy text-warm-white ring-2 ring-navy/30"
+                            : isSelected
+                              ? "bg-warm-white/20 text-warm-white hover:bg-warm-white/30"
+                              : "bg-warm-gray text-text-secondary hover:bg-border"
+                        }`}
+                      >
+                        {playingVoice === v.value ? "Stop" : "Preview"}
                       </span>
                     </div>
                   </button>

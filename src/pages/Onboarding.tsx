@@ -348,6 +348,8 @@ function HowDoYouWantNews({
 
 /* ── Screen 4 ── */
 
+const PREVIEW_STORY = "potomac-sewage-spill-2026";
+
 function PickYourVoice({
   selected,
   onSelect,
@@ -361,6 +363,43 @@ function PickYourVoice({
   onFinish: () => void;
   totalSteps: number;
 }) {
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const [playingVoice, setPlayingVoice] = useState<VoiceId | null>(null);
+
+  // Clean up audio on unmount
+  useEffect(() => {
+    return () => {
+      audioRef.current?.pause();
+      audioRef.current = null;
+    };
+  }, []);
+
+  function handlePreview(e: React.MouseEvent, voiceId: VoiceId) {
+    e.stopPropagation();
+
+    // If already playing this voice, stop it
+    if (playingVoice === voiceId) {
+      audioRef.current?.pause();
+      audioRef.current = null;
+      setPlayingVoice(null);
+      return;
+    }
+
+    // Stop any current playback
+    audioRef.current?.pause();
+
+    const audio = new Audio(`/audio/${PREVIEW_STORY}_young_${voiceId}.mp3`);
+    audioRef.current = audio;
+    setPlayingVoice(voiceId);
+
+    audio.addEventListener("ended", () => {
+      setPlayingVoice(null);
+      audioRef.current = null;
+    });
+
+    audio.play();
+  }
+
   return (
     <div className="flex flex-col min-h-dvh bg-warm-white">
       <div className="flex-1 flex flex-col px-page max-w-lg mx-auto w-full pt-10">
@@ -375,6 +414,7 @@ function PickYourVoice({
         <div className="flex flex-col gap-3">
           {VOICE_OPTIONS.map((voice) => {
             const isSelected = selected === voice.value;
+            const isPlaying = playingVoice === voice.value;
             return (
               <button
                 key={voice.value}
@@ -403,13 +443,21 @@ function PickYourVoice({
                     </span>
                   </div>
                   <span
-                    className={`text-xs font-medium px-3 py-1.5 rounded-full shrink-0 ml-3 ${
-                      isSelected
-                        ? "bg-warm-white/20 text-warm-white"
-                        : "bg-warm-gray text-text-secondary"
+                    role="button"
+                    tabIndex={0}
+                    onClick={(e) => handlePreview(e, voice.value)}
+                    onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") handlePreview(e as unknown as React.MouseEvent, voice.value); }}
+                    className={`text-xs font-medium px-3 py-1.5 rounded-full shrink-0 ml-3 transition-all duration-200 ${
+                      isPlaying
+                        ? isSelected
+                          ? "bg-warm-white/30 text-warm-white ring-2 ring-warm-white/40"
+                          : "bg-navy text-warm-white ring-2 ring-navy/30"
+                        : isSelected
+                          ? "bg-warm-white/20 text-warm-white hover:bg-warm-white/30"
+                          : "bg-warm-gray text-text-secondary hover:bg-border"
                     }`}
                   >
-                    Preview
+                    {isPlaying ? "Stop" : "Preview"}
                   </span>
                 </div>
               </button>
