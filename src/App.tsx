@@ -4,6 +4,7 @@ import Onboarding from "@/pages/Onboarding";
 import Settings from "@/pages/Settings";
 import Home from "@/pages/Home";
 import StoryDetail from "@/pages/StoryDetail";
+import DailyBrief from "@/pages/DailyBrief";
 
 function RequireOnboarding({ children }: { children: React.ReactNode }) {
   if (!hasCompletedOnboarding()) {
@@ -30,6 +31,14 @@ export default function App() {
         element={
           <RequireOnboarding>
             <StoryDetail />
+          </RequireOnboarding>
+        }
+      />
+      <Route
+        path="/daily-brief"
+        element={
+          <RequireOnboarding>
+            <DailyBrief />
           </RequireOnboarding>
         }
       />

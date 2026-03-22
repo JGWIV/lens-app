@@ -2,8 +2,8 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { loadPreferences } from "@/data/preferences";
 import { stories, type Story } from "@/data/stories";
-import { VOICE_OPTIONS, type VoiceId } from "@/data/constants";
-import { BriefingPlayer } from "@/components/AudioPlayer";
+
+
 
 /* ── Helpers ── */
 
@@ -267,13 +267,7 @@ export default function Home() {
 
   const readerLevel = prefs?.readerLevel ?? "adult";
   const selectedTopics = prefs?.topics ?? [];
-  const newsMode = prefs?.newsMode ?? "read";
-  const voiceKey = (prefs?.voice ?? "anchor") as VoiceId;
-  const voiceMeta = VOICE_OPTIONS.find((v) => v.value === voiceKey);
-  const voiceName = voiceMeta?.name ?? "The Anchor";
-
   const allowedAgeGates = getAgeGateAllowed(readerLevel);
-  const levelKey = readerLevel === "young" ? "young" : readerLevel === "teen" ? "teen" : "adult" as const;
 
   const filteredStories = stories
     .filter(
@@ -282,16 +276,6 @@ export default function Home() {
         (selectedTopics.length === 0 || selectedTopics.includes(s.topic))
     )
     .sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime());
-
-  const showBriefing = newsMode === "listen" || newsMode === "both";
-
-  // Build briefing audio URLs from top stories (ordered by source count)
-  const briefingStories = [...filteredStories]
-    .sort((a, b) => b.sources.confirming.length - a.sources.confirming.length)
-    .slice(0, 5);
-  const briefingAudioUrls = briefingStories
-    .map((s) => s.audio[levelKey]?.[voiceKey] ?? "")
-    .filter((url) => url !== "");
 
   if (loading) return <SkeletonScreen />;
 
@@ -334,25 +318,26 @@ export default function Home() {
           </h2>
         </div>
 
-        {/* Daily Briefing Player */}
-        {showBriefing && briefingAudioUrls.length > 0 && (
-          <BriefingPlayer
-            audioUrls={briefingAudioUrls}
-            voiceName={voiceName}
-            storyCount={briefingStories.length}
-            estimatedMinutes={briefingStories.length * 2}
-          />
-        )}
-        {showBriefing && briefingAudioUrls.length === 0 && (
-          <div className="w-full rounded-2xl bg-navy p-4 sm:p-5 mb-5">
-            <h3 className="text-base font-semibold text-warm-white mb-0.5">
-              Your Daily Briefing
-            </h3>
-            <p className="text-xs text-warm-white/50">
-              Audio not yet available. Check back soon.
-            </p>
+        {/* Daily Brief CTA */}
+        <button
+          onClick={() => navigate("/daily-brief")}
+          className="w-full rounded-2xl bg-navy p-4 sm:p-5 mb-5 text-left cursor-pointer hover:bg-navy-light transition-colors"
+        >
+          <div className="flex items-center gap-3">
+            <span className="text-2xl leading-none text-warm-white/80 select-none" style={{ fontFamily: "serif" }}>&#9678;</span>
+            <div className="flex-1 min-w-0">
+              <h3 className="text-base font-semibold text-warm-white">
+                Daily Brief
+              </h3>
+              <p className="text-xs text-warm-white/60">
+                Tap to listen to today's brief
+              </p>
+            </div>
+            <svg className="w-5 h-5 text-warm-white/40 shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+            </svg>
           </div>
-        )}
+        </button>
 
         {/* Stories Feed */}
         <section>
