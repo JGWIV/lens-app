@@ -43,11 +43,13 @@ function DefinableText({
     );
   }
 
-  // Build regex to match any defined word (case-insensitive, whole word for single words)
+  // Build regex: case-insensitive, allows optional trailing "s", "'s", "ed", "ing"
+  // so "primary" matches "primaries" won't work, but "Senate" matches "Senate's"
   const pattern = definitions
     .map((d) => d.word.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"))
+    .sort((a, b) => b.length - a.length) // longest first to avoid partial matches
     .join("|");
-  const regex = new RegExp(`(${pattern})`, "gi");
+  const regex = new RegExp(`(${pattern})(?='s|s\\b)?`, "gi");
 
   const parts = text.split(regex);
   const activeDef = definitions.find(
@@ -68,10 +70,10 @@ function DefinableText({
                 key={i}
                 type="button"
                 onClick={() => handleTap(match.word)}
-                className={`inline underline decoration-dotted underline-offset-2 cursor-pointer transition-colors ${
+                className={`inline cursor-pointer transition-colors rounded-sm ${
                   isActive
-                    ? "decoration-navy text-navy font-semibold decoration-2"
-                    : "decoration-text-muted/50 text-text-primary hover:decoration-navy/50"
+                    ? "underline decoration-solid decoration-[#1a6fbf] decoration-2 underline-offset-2 text-[#1a6fbf] bg-[#e8f0fe] font-semibold"
+                    : "underline decoration-solid decoration-[#4a90d9] decoration-[1.5px] underline-offset-2 text-text-primary bg-[#eef4fb] hover:bg-[#dce8f8] hover:decoration-[#1a6fbf]"
                 }`}
               >
                 {part}
