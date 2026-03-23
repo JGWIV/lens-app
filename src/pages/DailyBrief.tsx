@@ -48,117 +48,118 @@ export default function DailyBrief() {
     .map((id) => stories.find((s) => s.id === id))
     .filter((s): s is NonNullable<typeof s> => s != null);
 
-  // Use brief audio files (summary-length)
-  const audioUrls = briefStories.map(
+  // Build the full playlist: intro + 5 brief stories
+  const introSrc = `/audio/daily-brief-intro_${voiceKey}.mp3`;
+  const storySrcs = briefStories.map(
     (s) => `/audio/${s.id}_brief_${voiceKey}.mp3`
   );
+  // playlist[0] = intro, playlist[1..5] = stories
+  const playlist = [introSrc, ...storySrcs];
 
-  const introSrc = `/audio/daily-brief-intro_${voiceKey}.mp3`;
+  // Single persistent audio element — critical for iOS Safari
+  const audioRef = useRef<HTMLAudioElement>(null);
+  const gapTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const [state, setState] = useState<BriefState>("idle");
-  const [storyIndex, setStoryIndex] = useState(-1); // -1 = intro
+  const [trackIndex, setTrackIndex] = useState(0); // 0 = intro, 1-5 = stories
+  const [audioSrc, setAudioSrc] = useState(introSrc);
   const [duration, setDuration] = useState(0);
   const [currentTime, setCurrentTime] = useState(0);
   const [headlineVisible, setHeadlineVisible] = useState(true);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
-  const gapTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Derived state
+  const isIntro = trackIndex === 0;
+  const storyIndex = trackIndex - 1; // -1 when intro
+  const currentStory = briefStories[storyIndex];
+  const isActive = state === "playing" || state === "paused" || state === "intro";
+  const progress = duration > 0 ? (currentTime / duration) * 100 : 0;
 
   // Cleanup on unmount
   useEffect(() => {
     return () => {
-      audioRef.current?.pause();
-      audioRef.current = null;
       if (gapTimerRef.current) clearTimeout(gapTimerRef.current);
     };
   }, []);
 
-  const playStory = useCallback(
+  // Switch to a track and play it
+  const playTrack = useCallback(
     (index: number) => {
+      if (gapTimerRef.current) { clearTimeout(gapTimerRef.current); gapTimerRef.current = null; }
+
+      // Fade out headline
       setHeadlineVisible(false);
 
-      const src = audioUrls[index];
-      if (!src) {
-        if (index < briefStories.length - 1) {
-          playStory(index + 1);
-        } else {
-          setState("done");
-        }
-        return;
-      }
-
-      // Small delay for headline fade transition
       setTimeout(() => {
-        setStoryIndex(index);
-        setHeadlineVisible(true);
-
-        if (audioRef.current) audioRef.current.pause();
-
-        const audio = new Audio(src);
-        audioRef.current = audio;
+        setTrackIndex(index);
+        setAudioSrc(playlist[index]);
         setDuration(0);
         setCurrentTime(0);
+        setHeadlineVisible(true);
+        setState(index === 0 ? "intro" : "playing");
 
-        audio.addEventListener("loadedmetadata", () => {
-          setDuration(audio.duration);
+        // The audio element's src will update via React, triggering load+play
+        // We need a microtask to let React commit the new src before we call load/play
+        requestAnimationFrame(() => {
+          const audio = audioRef.current;
+          if (!audio) return;
+          audio.load();
+          audio.play().catch(() => {
+            // If play fails (e.g. missing file), skip to next
+            if (index < playlist.length - 1) {
+              playTrack(index + 1);
+            } else {
+              setState("done");
+            }
+          });
         });
-
-        audio.addEventListener("timeupdate", () => {
-          setCurrentTime(audio.currentTime);
-        });
-
-        audio.addEventListener("ended", () => {
-          if (index < briefStories.length - 1) {
-            gapTimerRef.current = setTimeout(() => playStory(index + 1), 1000);
-          } else {
-            setState("done");
-          }
-        });
-
-        audio.addEventListener("error", () => {
-          if (index < briefStories.length - 1) {
-            playStory(index + 1);
-          } else {
-            setState("done");
-          }
-        });
-
-        audio.play().catch(() => {
-          if (index < briefStories.length - 1) {
-            playStory(index + 1);
-          } else {
-            setState("done");
-          }
-        });
-
-        setState("playing");
       }, 300);
     },
-    [audioUrls, briefStories.length]
+    [playlist]
   );
 
-  const playIntro = useCallback(
-    (onDone: () => void) => {
-      if (audioRef.current) audioRef.current.pause();
+  // Called when a track ends naturally
+  const handleEnded = useCallback(() => {
+    if (trackIndex < playlist.length - 1) {
+      // 1-second gap, then swap src and play on the same element
+      gapTimerRef.current = setTimeout(() => {
+        const nextIndex = trackIndex + 1;
+        setTrackIndex(nextIndex);
+        setAudioSrc(playlist[nextIndex]);
+        setDuration(0);
+        setCurrentTime(0);
+        setHeadlineVisible(false);
 
-      const audio = new Audio(introSrc);
-      audioRef.current = audio;
-      setStoryIndex(-1);
-      setHeadlineVisible(true);
-      setDuration(0);
-      setCurrentTime(0);
-      setState("intro");
+        setTimeout(() => {
+          setHeadlineVisible(true);
+          setState(nextIndex === 0 ? "intro" : "playing");
 
-      audio.addEventListener("loadedmetadata", () => setDuration(audio.duration));
-      audio.addEventListener("timeupdate", () => setCurrentTime(audio.currentTime));
-      audio.addEventListener("ended", () => {
-        gapTimerRef.current = setTimeout(onDone, 1000);
-      });
-      audio.addEventListener("error", () => onDone());
+          requestAnimationFrame(() => {
+            const audio = audioRef.current;
+            if (!audio) return;
+            audio.load();
+            audio.play().catch(() => {
+              if (nextIndex < playlist.length - 1) {
+                playTrack(nextIndex + 1);
+              } else {
+                setState("done");
+              }
+            });
+          });
+        }, 300);
+      }, 1000);
+    } else {
+      setState("done");
+    }
+  }, [trackIndex, playlist, playTrack]);
 
-      audio.play().catch(() => onDone());
-    },
-    [introSrc]
-  );
+  const handleError = useCallback(() => {
+    // Skip broken tracks
+    if (trackIndex < playlist.length - 1) {
+      playTrack(trackIndex + 1);
+    } else {
+      setState("done");
+    }
+  }, [trackIndex, playlist.length, playTrack]);
 
   const handlePause = useCallback(() => {
     audioRef.current?.pause();
@@ -167,43 +168,49 @@ export default function DailyBrief() {
 
   const handleResume = useCallback(() => {
     audioRef.current?.play();
-    setState(storyIndex === -1 ? "intro" : "playing");
-  }, [storyIndex]);
+    setState(trackIndex === 0 ? "intro" : "playing");
+  }, [trackIndex]);
 
   const handlePlay = useCallback(() => {
     if (state === "idle" || state === "done") {
-      playIntro(() => playStory(0));
+      playTrack(0);
     } else if (state === "paused") {
       handleResume();
     }
-  }, [state, playStory, playIntro, handleResume]);
+  }, [state, playTrack, handleResume]);
 
   const handleSkip = useCallback(() => {
-    if (gapTimerRef.current) clearTimeout(gapTimerRef.current);
-    if (state === "intro" || storyIndex === -1) {
-      audioRef.current?.pause();
-      playStory(0);
-      return;
-    }
-    if (storyIndex < briefStories.length - 1) {
-      playStory(storyIndex + 1);
+    if (gapTimerRef.current) { clearTimeout(gapTimerRef.current); gapTimerRef.current = null; }
+    audioRef.current?.pause();
+
+    if (trackIndex < playlist.length - 1) {
+      playTrack(trackIndex + 1);
     } else {
-      audioRef.current?.pause();
       setState("done");
     }
-  }, [state, storyIndex, briefStories.length, playStory]);
+  }, [trackIndex, playlist.length, playTrack]);
 
   const handleReplay = useCallback(() => {
-    playIntro(() => playStory(0));
-  }, [playIntro, playStory]);
-
-  const progress = duration > 0 ? (currentTime / duration) * 100 : 0;
-  const isActive = state === "playing" || state === "paused" || state === "intro";
-  const isIntro = storyIndex === -1;
-  const currentStory = briefStories[storyIndex];
+    playTrack(0);
+  }, [playTrack]);
 
   return (
     <div className="min-h-dvh bg-white flex flex-col relative">
+      {/* Single persistent audio element for iOS Safari compatibility */}
+      <audio
+        ref={audioRef}
+        src={audioSrc}
+        preload="auto"
+        onLoadedMetadata={() => {
+          if (audioRef.current) setDuration(audioRef.current.duration);
+        }}
+        onTimeUpdate={() => {
+          if (audioRef.current) setCurrentTime(audioRef.current.currentTime);
+        }}
+        onEnded={handleEnded}
+        onError={handleError}
+      />
+
       {/* Back button */}
       <button
         onClick={() => {
