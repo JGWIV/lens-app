@@ -5,6 +5,8 @@ import {
   Geography,
   Marker,
 } from "react-simple-maps";
+import { geoArea } from "d3-geo";
+import type { Feature, Geometry } from "geojson";
 import type { Source } from "@/data/stories";
 
 const US_STATES_URL = "/maps/us-states.json";
@@ -74,6 +76,42 @@ const SELECTED_STROKE = "#2ecc71";
 // effectively invisible. Overlay a visible marker at DC's coordinates.
 const DC_COORDS: [number, number] = [-77.0369, 38.9072];
 const DC_FIPS = "11";
+
+// World-atlas represents each country (incl. overseas territories) as a single
+// MultiPolygon. Shading the whole MultiPolygon lights up territories far from
+// the mainland (French Guiana for France, Svalbard for Norway, Alaska/PR for
+// the U.S.). Keep only the largest-by-area polygon per country so the mainland
+// is what gets highlighted.
+function keepLargestPolygonPerFeature(
+  features: Array<Feature<Geometry, Record<string, unknown>>>,
+): Array<Feature<Geometry, Record<string, unknown>>> {
+  return features.map((feat) => {
+    if (!feat.geometry || feat.geometry.type !== "MultiPolygon") return feat;
+    const polygons = feat.geometry.coordinates;
+    if (polygons.length <= 1) return feat;
+
+    let maxIdx = 0;
+    let maxArea = 0;
+    for (let i = 0; i < polygons.length; i++) {
+      const area = geoArea({
+        type: "Polygon",
+        coordinates: polygons[i],
+      });
+      if (area > maxArea) {
+        maxArea = area;
+        maxIdx = i;
+      }
+    }
+
+    return {
+      ...feat,
+      geometry: {
+        type: "Polygon",
+        coordinates: polygons[maxIdx],
+      },
+    };
+  });
+}
 
 export default function CoverageMap({ sources }: { sources: Source[] }) {
   const { stateToSources, countryToSources, usMajority, total } = useMemo(() => {
@@ -155,6 +193,11 @@ export default function CoverageMap({ sources }: { sources: Source[] }) {
   }
 
   const coveredStates = Array.from(stateToSources.keys()).sort();
+  const coveredCountries = Array.from(countryToSources.keys()).sort((a, b) => {
+    const aName = COUNTRY_NAMES[a] ?? a;
+    const bName = COUNTRY_NAMES[b] ?? b;
+    return aName.localeCompare(bName);
+  });
 
   const switchView = (next: "us" | "world") => {
     setView(next);
@@ -275,7 +318,10 @@ export default function CoverageMap({ sources }: { sources: Source[] }) {
             height={200}
             style={{ width: "100%", height: "auto" }}
           >
-            <Geographies geography={WORLD_URL}>
+            <Geographies
+              geography={WORLD_URL}
+              parseGeographies={keepLargestPolygonPerFeature}
+            >
               {({ geographies }) =>
                 geographies.map((geo) => {
                   const numId = String(geo.id);
@@ -353,8 +399,9 @@ export default function CoverageMap({ sources }: { sources: Source[] }) {
         {total} of {TOTAL_LENS_SOURCES} Lens sources covered this story
       </p>
 
-      {/* Mobile fallback text list for US view (small states have tap targets under 40px) */}
-      {view === "us" && (
+      {/* Text list below the map — supplementary info + mobile tap fallback.
+          Shown in both views, relabeled per view. */}
+      {view === "us" ? (
         <div className="mt-3 pt-3 border-t border-border/60">
           <p className="text-[11px] font-semibold text-navy/60 uppercase tracking-wider mb-1.5">
             States that covered this story
@@ -379,6 +426,33 @@ export default function CoverageMap({ sources }: { sources: Source[] }) {
           </p>
           <p className="text-xs text-text-muted">
             All other U.S. states and territories.
+          </p>
+        </div>
+      ) : (
+        <div className="mt-3 pt-3 border-t border-border/60">
+          <p className="text-[11px] font-semibold text-navy/60 uppercase tracking-wider mb-1.5">
+            Countries that covered this story
+          </p>
+          {coveredCountries.length > 0 ? (
+            <ul className="flex flex-col gap-1.5 mb-3">
+              {coveredCountries.map((c) => {
+                const sourcesInCountry = countryToSources.get(c) ?? [];
+                return (
+                  <li key={c} className="text-xs text-text-secondary leading-snug">
+                    <span className="font-medium text-navy">{COUNTRY_NAMES[c] ?? c}</span>
+                    <span className="text-text-muted"> — {sourcesInCountry.map((src) => src.name).join(", ")}</span>
+                  </li>
+                );
+              })}
+            </ul>
+          ) : (
+            <p className="text-xs text-text-muted mb-3">None</p>
+          )}
+          <p className="text-[11px] font-semibold text-navy/60 uppercase tracking-wider mb-1">
+            Countries that did not
+          </p>
+          <p className="text-xs text-text-muted">
+            All other countries.
           </p>
         </div>
       )}
