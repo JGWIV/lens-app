@@ -1,0 +1,1 @@
+The authoritative spec for Lens is master-document.md (Version 1.1, April 18, 2026). All Claude Code sessions should read this file for context. It combines the Project Bible v3.1 and Build Guide v3.1 into a single source of truth.
