@@ -66,8 +66,8 @@ const COUNTRY_NAMES: Record<string, string> = {
   NO: "Norway", CH: "Switzerland",
 };
 
-const COVERED_FILL = "#1a1a2e";
-const COVERED_HOVER = "#2d2d4a";
+const COVERED_FILL = "#D62828";
+const COVERED_HOVER = "#E63946";
 const UNCOVERED_FILL = "#e5e7eb";
 const BORDER_COLOR = "#ffffff";
 const SELECTED_STROKE = "#2ecc71";
