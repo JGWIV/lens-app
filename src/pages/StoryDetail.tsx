@@ -4,6 +4,7 @@ import { stories, type ReadingLevel, type Perspective, type TapToDefine, type St
 import { loadPreferences } from "@/data/preferences";
 import { VOICE_OPTIONS, type VoiceId } from "@/data/constants";
 import AudioPlayer from "@/components/AudioPlayer";
+import CoverageMap from "@/components/CoverageMap";
 
 type TabId = "happened" | "matters" | "think" | "unknown";
 
@@ -194,6 +195,9 @@ function HowWeKnow({ story }: { story: Story }) {
               {story.sources.methodology}
             </p>
           </div>
+
+          {/* Coverage Map */}
+          <CoverageMap sources={story.sources.confirming} />
 
           {/* Source count summary */}
           <div className="mt-3 pt-3 border-t border-border/60">

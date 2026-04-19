@@ -16,9 +16,15 @@ export interface ReadingLevel {
   tapToDefine: TapToDefine[];
 }
 
+export interface SourceLocation {
+  country: string;
+  usState: string | null;
+}
+
 export interface Source {
   name: string;
   type: string;
+  location: SourceLocation;
 }
 
 export interface AudioVoices {
@@ -241,16 +247,41 @@ export const stories: Story[] = [
     },
     sources: {
       confirming: [
-        { name: "USDA", type: "Government / Primary Source" },
-        { name: "NPR", type: "Public Media" },
-        { name: "PBS NewsHour", type: "Public Media" },
+        {
+          name: "USDA",
+          type: "Government / Primary Source",
+          location: { country: "US", usState: "DC" },
+        },
+        {
+          name: "NPR",
+          type: "Public Media",
+          location: { country: "US", usState: "DC" },
+        },
+        {
+          name: "PBS NewsHour",
+          type: "Public Media",
+          location: { country: "US", usState: "VA" },
+        },
         {
           name: "Harvard T.H. Chan School of Public Health",
           type: "Academic / Expert",
+          location: { country: "US", usState: "MA" },
         },
-        { name: "Yale School of Public Health", type: "Academic / Expert" },
-        { name: "Science News", type: "Science Journalism" },
-        { name: "Northeastern University", type: "Academic / Expert" },
+        {
+          name: "Yale School of Public Health",
+          type: "Academic / Expert",
+          location: { country: "US", usState: "CT" },
+        },
+        {
+          name: "Science News",
+          type: "Science Journalism",
+          location: { country: "US", usState: "DC" },
+        },
+        {
+          name: "Northeastern University",
+          type: "Academic / Expert",
+          location: { country: "US", usState: "MA" },
+        },
       ],
       methodology:
         "This story was built from 7 sources across government, public media, and independent academic perspectives. Core facts confirmed by the official USDA press release and the full guidelines document. Expert criticism drawn from named researchers at Harvard, Stanford, Yale, and UNC Chapel Hill who served on or reviewed the independent advisory committee. All three perspectives represent positions held by credentialed nutrition scientists — this is a genuine scientific debate, not a political one.",
@@ -456,12 +487,36 @@ export const stories: Story[] = [
     },
     sources: {
       confirming: [
-        { name: "AP", type: "Wire Service" },
-        { name: "Fox News", type: "Broadcast / Right-leaning" },
-        { name: "NBC News", type: "Broadcast / Center" },
-        { name: "Dallas Morning News", type: "Regional / Texas" },
-        { name: "Houston Chronicle", type: "Regional / Texas" },
-        { name: "Ballotpedia", type: "Nonpartisan Elections Reference" },
+        {
+          name: "AP",
+          type: "Wire Service",
+          location: { country: "US", usState: "NY" },
+        },
+        {
+          name: "Fox News",
+          type: "Broadcast / Right-leaning",
+          location: { country: "US", usState: "NY" },
+        },
+        {
+          name: "NBC News",
+          type: "Broadcast / Center",
+          location: { country: "US", usState: "NY" },
+        },
+        {
+          name: "Dallas Morning News",
+          type: "Regional / Texas",
+          location: { country: "US", usState: "TX" },
+        },
+        {
+          name: "Houston Chronicle",
+          type: "Regional / Texas",
+          location: { country: "US", usState: "TX" },
+        },
+        {
+          name: "Ballotpedia",
+          type: "Nonpartisan Elections Reference",
+          location: { country: "US", usState: "WI" },
+        },
       ],
       methodology:
         "This story was built from 6 sources across wire services, right-leaning and center broadcast, two major Texas regional newspapers, and a nonpartisan elections reference. AP provided primary election results. Fox News provided Republican candidate interviews and conservative framing. Dallas Morning News and Houston Chronicle provided Texas-specific reporting and local context. Primary results confirmed by multiple outlets.",
@@ -660,21 +715,29 @@ export const stories: Story[] = [
     },
     sources: {
       confirming: [
-        { name: "Ballotpedia", type: "Nonpartisan Elections Reference" },
+        {
+          name: "Ballotpedia",
+          type: "Nonpartisan Elections Reference",
+          location: { country: "US", usState: "WI" },
+        },
         {
           name: "Bipartisan Policy Center",
           type: "Nonpartisan Policy Organization",
+          location: { country: "US", usState: "DC" },
         },
         {
-          name: "Wikipedia / 2026 United States Elections",
-          type: "Reference / Multiple Sources Cited",
+          name: "Fox News",
+          type: "Right-leaning / National Broadcast",
+          location: { country: "US", usState: "NY" },
         },
-        { name: "270toWin", type: "Nonpartisan Elections Data" },
-        { name: "Fox News", type: "Right-leaning / National Broadcast" },
-        { name: "The Hill", type: "Political News / Center" },
+        {
+          name: "The Hill",
+          type: "Political News / Center",
+          location: { country: "US", usState: "DC" },
+        },
       ],
       methodology:
-        "This story was built from 6 sources across nonpartisan reference organizations, centrist political reporting, and right-leaning broadcast media. Current seat counts and election dates confirmed by Ballotpedia and official congressional records. Competitive race assessments drawn from multiple nonpartisan forecasters including Cook Political Report ratings reflected in 270toWin composite. The third adult perspective on election administration concerns is drawn from reported news of state legislative responses to announced federal polling place presence.",
+        "This story was built from 4 sources across nonpartisan reference organizations, centrist political reporting, and right-leaning broadcast media. Current seat counts and election dates confirmed by Ballotpedia and official congressional records. Competitive race assessments drawn from multiple nonpartisan forecasters including Cook Political Report ratings. The third adult perspective on election administration concerns is drawn from reported news of state legislative responses to announced federal polling place presence.",
     },
     goDeeper: [
       {
@@ -688,6 +751,10 @@ export const stories: Story[] = [
       {
         label: "Interactive Senate map — 270toWin",
         url: "https://www.270towin.com/2026-senate-election/",
+      },
+      {
+        label: "Wikipedia: 2026 United States elections",
+        url: "https://en.wikipedia.org/wiki/2026_United_States_elections",
       },
     ],
     audio: {
@@ -867,11 +934,31 @@ export const stories: Story[] = [
     },
     sources: {
       confirming: [
-        { name: "CNN Politics", type: "Broadcast / Left-center" },
-        { name: "ABC News", type: "Broadcast / Center" },
-        { name: "The Hill", type: "Political News / Center" },
-        { name: "Fox News", type: "Broadcast / Right-leaning" },
-        { name: "The Intercept", type: "Investigative / Left-leaning" },
+        {
+          name: "CNN Politics",
+          type: "Broadcast / Left-center",
+          location: { country: "US", usState: "DC" },
+        },
+        {
+          name: "ABC News",
+          type: "Broadcast / Center",
+          location: { country: "US", usState: "NY" },
+        },
+        {
+          name: "The Hill",
+          type: "Political News / Center",
+          location: { country: "US", usState: "DC" },
+        },
+        {
+          name: "Fox News",
+          type: "Broadcast / Right-leaning",
+          location: { country: "US", usState: "NY" },
+        },
+        {
+          name: "The Intercept",
+          type: "Investigative / Left-leaning",
+          location: { country: "US", usState: "NY" },
+        },
       ],
       methodology:
         "This story was built from 5 sources spanning left-leaning, center, and right-leaning outlets. Core facts confirmed across CNN, ABC, and Fox News. The Intercept provided the Pentagon DISA memo. Named officials quoted from press conferences and on-record statements. Confidence badge is yellow because key claims rely on anonymous current and former officials whose accounts cannot be independently verified.",
@@ -1064,15 +1151,36 @@ export const stories: Story[] = [
     },
     sources: {
       confirming: [
-        { name: "NBC News", type: "National Broadcast / Center" },
+        {
+          name: "NBC News",
+          type: "National Broadcast / Center",
+          location: { country: "US", usState: "NY" },
+        },
         {
           name: "Washington Post",
           type: "National Print / Left-center",
+          location: { country: "US", usState: "DC" },
         },
-        { name: "The Hill", type: "Political News / Center" },
-        { name: "Al Jazeera", type: "International" },
-        { name: "Time Magazine", type: "National Magazine / Center" },
-        { name: "Euronews", type: "International / European" },
+        {
+          name: "The Hill",
+          type: "Political News / Center",
+          location: { country: "US", usState: "DC" },
+        },
+        {
+          name: "Al Jazeera",
+          type: "International",
+          location: { country: "QA", usState: null },
+        },
+        {
+          name: "Time Magazine",
+          type: "National Magazine / Center",
+          location: { country: "US", usState: "NY" },
+        },
+        {
+          name: "Euronews",
+          type: "International / European",
+          location: { country: "FR", usState: null },
+        },
       ],
       methodology:
         "This story was built from 6 sources across center, left-center, and international outlets. Core facts — the waiver date, scope, expiration, and official statements — are confirmed across all sources. Named statements from Zelensky, Merz, Macron, Bessent, and EU Council President Costa are drawn directly from press conference transcripts and official posts. The Kremlin response is confirmed by multiple outlets. The confidence badge is green because all central facts are confirmed by multiple independent sources with no material factual disputes.",
@@ -1269,19 +1377,41 @@ export const stories: Story[] = [
     },
     sources: {
       confirming: [
-        { name: "FactCheck.org", type: "Nonpartisan Fact-Checker" },
-        { name: "PolitiFact", type: "Nonpartisan Fact-Checker" },
+        {
+          name: "FactCheck.org",
+          type: "Nonpartisan Fact-Checker",
+          location: { country: "US", usState: "PA" },
+        },
+        {
+          name: "PolitiFact",
+          type: "Nonpartisan Fact-Checker",
+          location: { country: "US", usState: "FL" },
+        },
         {
           name: "Congressional Research Service",
           type: "Government / Primary Source",
+          location: { country: "US", usState: "DC" },
         },
-        { name: "CNBC", type: "Business / Financial News" },
-        { name: "Al Jazeera", type: "International" },
+        {
+          name: "CNBC",
+          type: "Business / Financial News",
+          location: { country: "US", usState: "NJ" },
+        },
+        {
+          name: "Al Jazeera",
+          type: "International",
+          location: { country: "QA", usState: null },
+        },
         {
           name: "Associated Press / Chicago Tribune",
           type: "Wire Service / Regional",
+          location: { country: "US", usState: "IL" },
         },
-        { name: "Time Magazine", type: "National Magazine" },
+        {
+          name: "Time Magazine",
+          type: "National Magazine",
+          location: { country: "US", usState: "NY" },
+        },
       ],
       methodology:
         "This story was built from 7 sources including two independent nonpartisan fact-checkers, the Congressional Research Service, and outlets across international and financial media. Gas price figures are from AP reporting confirmed by PolitiFact. Oil price data is from CRS and CNBC. IEA reserve release figures are from official IEA statements confirmed across multiple outlets. The confidence badge is green: all core facts are confirmed by multiple independent sources including primary government and nonpartisan sources.",
@@ -1480,12 +1610,36 @@ export const stories: Story[] = [
     },
     sources: {
       confirming: [
-        { name: "AP / NPR", type: "Wire Service / Public Media" },
-        { name: "Reuters", type: "Wire Service / International" },
-        { name: "Al Jazeera", type: "International" },
-        { name: "BBC", type: "International Broadcast" },
-        { name: "Euronews", type: "International / European" },
-        { name: "RFE/RL", type: "Independent / US-funded International Broadcasting" },
+        {
+          name: "AP / NPR",
+          type: "Wire Service / Public Media",
+          location: { country: "US", usState: "DC" },
+        },
+        {
+          name: "Reuters",
+          type: "Wire Service / International",
+          location: { country: "GB", usState: null },
+        },
+        {
+          name: "Al Jazeera",
+          type: "International",
+          location: { country: "QA", usState: null },
+        },
+        {
+          name: "BBC",
+          type: "International Broadcast",
+          location: { country: "GB", usState: null },
+        },
+        {
+          name: "Euronews",
+          type: "International / European",
+          location: { country: "FR", usState: null },
+        },
+        {
+          name: "RFE/RL",
+          type: "Independent / US-funded International Broadcasting",
+          location: { country: "CZ", usState: null },
+        },
       ],
       methodology:
         "This story was built from 6 sources across wire services, public media, and international broadcasting. Battlefield assessments reference ISW data as reported across multiple outlets. Both Russian and Ukrainian official statements included and attributed. RFE/RL included for its independent reporting on Eastern European affairs. Confidence badge is green: all core diplomatic and military facts confirmed across multiple independent outlets.",
@@ -1684,17 +1838,31 @@ export const stories: Story[] = [
     },
     sources: {
       confirming: [
-        { name: "CNBC", type: "Business / Financial News" },
-        { name: "CNN Business", type: "National Broadcast / Business" },
+        {
+          name: "CNBC",
+          type: "Business / Financial News",
+          location: { country: "US", usState: "NJ" },
+        },
+        {
+          name: "CNN Business",
+          type: "National Broadcast / Business",
+          location: { country: "US", usState: "NY" },
+        },
         {
           name: "Washington Post",
           type: "National Print / Left-center",
+          location: { country: "US", usState: "DC" },
         },
         {
           name: "Yahoo Finance / AP",
           type: "Financial News / Wire Service",
+          location: { country: "US", usState: "NY" },
         },
-        { name: "Newsweek", type: "National Magazine / Center" },
+        {
+          name: "Newsweek",
+          type: "National Magazine / Center",
+          location: { country: "US", usState: "NY" },
+        },
       ],
       methodology:
         "This story was built from 5 sources spanning financial journalism, national broadcast, and wire services. All core facts — nomination date, Warsh's background, Senate committee composition, current mortgage rate levels — are confirmed across multiple sources. Named economist quotes are attributed to their institutions. The confidence badge is yellow because the central question — what Warsh will actually do as chair — is genuinely uncertain, and competing economic analyses from credentialed economists reach meaningfully different conclusions.",
@@ -1887,12 +2055,36 @@ export const stories: Story[] = [
     },
     sources: {
       confirming: [
-        { name: "Axios", type: "Digital News / Center" },
-        { name: "Time Magazine", type: "National Magazine / Center" },
-        { name: "NBC News", type: "Broadcast / Center" },
-        { name: "The Hill", type: "Political News / Center" },
-        { name: "PBS NewsHour", type: "Public Media / Center" },
-        { name: "Stateline / Pew", type: "Nonpartisan State Policy Journalism" },
+        {
+          name: "Axios",
+          type: "Digital News / Center",
+          location: { country: "US", usState: "VA" },
+        },
+        {
+          name: "Time Magazine",
+          type: "National Magazine / Center",
+          location: { country: "US", usState: "NY" },
+        },
+        {
+          name: "NBC News",
+          type: "Broadcast / Center",
+          location: { country: "US", usState: "NY" },
+        },
+        {
+          name: "The Hill",
+          type: "Political News / Center",
+          location: { country: "US", usState: "DC" },
+        },
+        {
+          name: "PBS NewsHour",
+          type: "Public Media / Center",
+          location: { country: "US", usState: "VA" },
+        },
+        {
+          name: "Stateline / Pew",
+          type: "Nonpartisan State Policy Journalism",
+          location: { country: "US", usState: "DC" },
+        },
       ],
       methodology:
         "This story was built from 6 sources across public media, health journalism, and nonpartisan policy reporting. Case counts from CDC data confirmed across multiple outlets. Vaccination rate figures from CDC kindergarten survey data. Named scientific claims attributed to credentialed physicians at named institutions. Kennedy statements fact-checked against CDC and independent scientific sources. Confidence badge is green: all core public health facts confirmed by multiple independent sources and CDC data.",
@@ -2094,12 +2286,36 @@ export const stories: Story[] = [
     },
     sources: {
       confirming: [
-        { name: "PBS NewsHour", type: "Public Media / Center" },
-        { name: "Al Jazeera", type: "International" },
-        { name: "Reuters", type: "Wire Service / International" },
-        { name: "BBC", type: "International Broadcast" },
-        { name: "Euronews", type: "International / European" },
-        { name: "Washington Times", type: "National Print / Right-leaning" },
+        {
+          name: "PBS NewsHour",
+          type: "Public Media / Center",
+          location: { country: "US", usState: "VA" },
+        },
+        {
+          name: "Al Jazeera",
+          type: "International",
+          location: { country: "QA", usState: null },
+        },
+        {
+          name: "Reuters",
+          type: "Wire Service / International",
+          location: { country: "GB", usState: null },
+        },
+        {
+          name: "BBC",
+          type: "International Broadcast",
+          location: { country: "GB", usState: null },
+        },
+        {
+          name: "Euronews",
+          type: "International / European",
+          location: { country: "FR", usState: null },
+        },
+        {
+          name: "Washington Times",
+          type: "National Print / Right-leaning",
+          location: { country: "US", usState: "DC" },
+        },
       ],
       methodology:
         "This story was built from 6 sources across wire services, public media, international broadcasting, and right-leaning national print. Launch facts confirmed by South Korean Joint Chiefs of Staff statements reported across all sources. Kim Yo Jong statement confirmed by multiple outlets. Washington Times provided conservative framing and operational detail on Freedom Shield exercises. Confidence badge is green: all core launch facts confirmed by multiple independent sources.",
@@ -2300,22 +2516,38 @@ export const stories: Story[] = [
         {
           name: "DC Water (official utility)",
           type: "Primary Source / Government Utility",
+          location: { country: "US", usState: "DC" },
         },
         {
           name: "DC DOEE (official agency)",
           type: "Primary Source / Government Agency",
+          location: { country: "US", usState: "DC" },
         },
-        { name: "NPR", type: "Public Media / Center" },
-        { name: "The Hill", type: "Political News / Center" },
+        {
+          name: "NPR",
+          type: "Public Media / Center",
+          location: { country: "US", usState: "DC" },
+        },
+        {
+          name: "The Hill",
+          type: "Political News / Center",
+          location: { country: "US", usState: "DC" },
+        },
         {
           name: "Maryland Matters / WTOP",
           type: "Regional / Local News",
+          location: { country: "US", usState: "MD" },
         },
         {
           name: "Potomac Conservancy",
           type: "Environmental Advocacy / Primary Source",
+          location: { country: "US", usState: "MD" },
         },
-        { name: "AP / ClickOrlando", type: "Wire Service" },
+        {
+          name: "AP / ClickOrlando",
+          type: "Wire Service",
+          location: { country: "US", usState: "FL" },
+        },
       ],
       methodology:
         "This story was built from 7 sources including two official government primary sources, a wire service, public media, regional journalism, and an environmental advocacy organization. All volume figures — 240-300 million gallons — are from DC Water official statements confirmed by multiple outlets. E. coli measurements come from DC Water monitoring data and independent University of Maryland research, both cited in context. The emergency repair completion on March 14 is from AP reporting confirmed by DC Water's official statement. Confidence badge is green: all core facts are confirmed by multiple independent sources including official primary sources.",
@@ -2509,11 +2741,31 @@ export const stories: Story[] = [
     },
     sources: {
       confirming: [
-        { name: "Reuters", type: "Wire Service / International" },
-        { name: "NBC News", type: "Broadcast / Center" },
-        { name: "Al Jazeera", type: "International" },
-        { name: "BBC", type: "International Broadcast" },
-        { name: "AFP", type: "Wire Service / International" },
+        {
+          name: "Reuters",
+          type: "Wire Service / International",
+          location: { country: "GB", usState: null },
+        },
+        {
+          name: "NBC News",
+          type: "Broadcast / Center",
+          location: { country: "US", usState: "NY" },
+        },
+        {
+          name: "Al Jazeera",
+          type: "International",
+          location: { country: "QA", usState: null },
+        },
+        {
+          name: "BBC",
+          type: "International Broadcast",
+          location: { country: "GB", usState: null },
+        },
+        {
+          name: "AFP",
+          type: "Wire Service / International",
+          location: { country: "FR", usState: null },
+        },
       ],
       methodology:
         "This story was built from 5 sources across wire services and international broadcasting. Reuters verified the location of at least one social media video but could not confirm the exact date. AFP and BBC provided additional international coverage. Confidence badge is yellow because independent verification of events inside Cuba is structurally limited by state control of media — number of protesters and full aftermath unconfirmed. Cuban government statements attributed to official state media and President Díaz-Canel's official social media.",
