@@ -1,5 +1,10 @@
-import { useMemo, useState } from "react";
-import { ComposableMap, Geographies, Geography } from "react-simple-maps";
+import { useEffect, useMemo, useRef, useState } from "react";
+import {
+  ComposableMap,
+  Geographies,
+  Geography,
+  Marker,
+} from "react-simple-maps";
 import type { Source } from "@/data/stories";
 
 const US_STATES_URL = "/maps/us-states.json";
@@ -63,6 +68,12 @@ const COVERED_FILL = "#1a1a2e";
 const COVERED_HOVER = "#2d2d4a";
 const UNCOVERED_FILL = "#e5e7eb";
 const BORDER_COLOR = "#ffffff";
+const SELECTED_STROKE = "#2ecc71";
+
+// DC is ~68 sq mi — at projection scale the geography is ~1px wide and
+// effectively invisible. Overlay a visible marker at DC's coordinates.
+const DC_COORDS: [number, number] = [-77.0369, 38.9072];
+const DC_FIPS = "11";
 
 export default function CoverageMap({ sources }: { sources: Source[] }) {
   const { stateToSources, countryToSources, usMajority, total } = useMemo(() => {
@@ -96,6 +107,21 @@ export default function CoverageMap({ sources }: { sources: Source[] }) {
 
   const [view, setView] = useState<"us" | "world">(usMajority ? "us" : "world");
   const [selected, setSelected] = useState<string | null>(null);
+  const mapContainerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!selected) return;
+    const onOutsideMouseDown = (e: MouseEvent) => {
+      if (
+        mapContainerRef.current &&
+        !mapContainerRef.current.contains(e.target as Node)
+      ) {
+        setSelected(null);
+      }
+    };
+    document.addEventListener("mousedown", onOutsideMouseDown);
+    return () => document.removeEventListener("mousedown", onOutsideMouseDown);
+  }, [selected]);
 
   if (total === 0) {
     return (
@@ -165,7 +191,10 @@ export default function CoverageMap({ sources }: { sources: Source[] }) {
       </div>
 
       {/* Map */}
-      <div className="w-full rounded-lg bg-white border border-border overflow-hidden">
+      <div
+        ref={mapContainerRef}
+        className="relative w-full rounded-lg bg-white border border-border overflow-hidden"
+      >
         {view === "us" ? (
           <ComposableMap
             projection="geoAlbersUsa"
@@ -180,6 +209,7 @@ export default function CoverageMap({ sources }: { sources: Source[] }) {
                   const fips = String(geo.id);
                   const stateCode = FIPS_TO_STATE[fips];
                   const covered = stateCode ? stateToSources.has(stateCode) : false;
+                  const isSelected = selected === fips;
                   return (
                     <Geography
                       key={geo.rsmKey}
@@ -192,15 +222,15 @@ export default function CoverageMap({ sources }: { sources: Source[] }) {
                       style={{
                         default: {
                           fill: covered ? COVERED_FILL : UNCOVERED_FILL,
-                          stroke: BORDER_COLOR,
-                          strokeWidth: 0.5,
+                          stroke: isSelected ? SELECTED_STROKE : BORDER_COLOR,
+                          strokeWidth: isSelected ? 1.5 : 0.5,
                           outline: "none",
                           cursor: covered ? "pointer" : "default",
                         },
                         hover: {
                           fill: covered ? COVERED_HOVER : UNCOVERED_FILL,
-                          stroke: BORDER_COLOR,
-                          strokeWidth: 0.5,
+                          stroke: isSelected ? SELECTED_STROKE : BORDER_COLOR,
+                          strokeWidth: isSelected ? 1.5 : 0.5,
                           outline: "none",
                           cursor: covered ? "pointer" : "default",
                         },
@@ -214,6 +244,28 @@ export default function CoverageMap({ sources }: { sources: Source[] }) {
                 })
               }
             </Geographies>
+
+            {/* DC marker overlay — geography is sub-pixel at this scale */}
+            {stateToSources.has("DC") && (
+              <Marker
+                coordinates={DC_COORDS}
+                onClick={() => {
+                  setSelected((prev) => (prev === DC_FIPS ? null : DC_FIPS));
+                }}
+                style={{
+                  default: { cursor: "pointer", outline: "none" },
+                  hover: { cursor: "pointer", outline: "none" },
+                  pressed: { outline: "none" },
+                }}
+              >
+                <circle
+                  r={5}
+                  fill={COVERED_FILL}
+                  stroke={selected === DC_FIPS ? SELECTED_STROKE : BORDER_COLOR}
+                  strokeWidth={selected === DC_FIPS ? 2 : 1.2}
+                />
+              </Marker>
+            )}
           </ComposableMap>
         ) : (
           <ComposableMap
@@ -231,6 +283,7 @@ export default function CoverageMap({ sources }: { sources: Source[] }) {
                   const covered = countryCode
                     ? countryToSources.has(countryCode)
                     : false;
+                  const isSelected = selected === numId;
                   return (
                     <Geography
                       key={geo.rsmKey}
@@ -243,15 +296,15 @@ export default function CoverageMap({ sources }: { sources: Source[] }) {
                       style={{
                         default: {
                           fill: covered ? COVERED_FILL : UNCOVERED_FILL,
-                          stroke: BORDER_COLOR,
-                          strokeWidth: 0.3,
+                          stroke: isSelected ? SELECTED_STROKE : BORDER_COLOR,
+                          strokeWidth: isSelected ? 1 : 0.3,
                           outline: "none",
                           cursor: covered ? "pointer" : "default",
                         },
                         hover: {
                           fill: covered ? COVERED_HOVER : UNCOVERED_FILL,
-                          stroke: BORDER_COLOR,
-                          strokeWidth: 0.3,
+                          stroke: isSelected ? SELECTED_STROKE : BORDER_COLOR,
+                          strokeWidth: isSelected ? 1 : 0.3,
                           outline: "none",
                           cursor: covered ? "pointer" : "default",
                         },
@@ -267,17 +320,33 @@ export default function CoverageMap({ sources }: { sources: Source[] }) {
             </Geographies>
           </ComposableMap>
         )}
-      </div>
 
-      {/* Selection tooltip (below map, avoids screen-edge cutoff) */}
-      {selected && selectedSources.length > 0 && (
-        <div className="mt-2 p-3 rounded-lg bg-navy text-warm-white text-xs animate-[fadeIn_0.15s_ease-out]">
-          <div className="font-semibold mb-1">{selectedLabel}</div>
-          <div className="text-warm-white/80 leading-relaxed">
-            {selectedSources.map((s) => s.name).join(", ")}
+        {/* Selection tooltip — absolute overlay anchored to the map container
+            so it's visible near the tap, never cut off at screen edges */}
+        {selected && selectedSources.length > 0 && (
+          <div className="absolute top-2 left-2 right-2 rounded-lg bg-navy text-warm-white shadow-lg p-3 pr-9 animate-[fadeIn_0.15s_ease-out]">
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                setSelected(null);
+              }}
+              aria-label="Close"
+              className="absolute top-2 right-2 w-6 h-6 flex items-center justify-center rounded-full hover:bg-white/10 cursor-pointer"
+            >
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+            <div className="text-[11px] font-semibold uppercase tracking-wider text-warm-white/60 mb-0.5">
+              {selectedLabel}
+            </div>
+            <div className="text-xs text-warm-white leading-relaxed">
+              {selectedSources.map((s) => s.name).join(", ")}
+            </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
 
       {/* Summary */}
       <p className="mt-3 text-xs text-text-muted text-center">
