@@ -6,12 +6,13 @@ export interface Topic {
 export const TOPICS: Topic[] = [
   { label: "Government & Politics", icon: "🏛" },
   { label: "World News", icon: "🌍" },
-  { label: "Science & Space", icon: "🔬" },
+  { label: "Science", icon: "🔬" },
+  { label: "Space", icon: "🚀" },
   { label: "Technology", icon: "💻" },
   { label: "Sports", icon: "⚽" },
   { label: "Animals & Nature", icon: "🐾" },
   { label: "Business & Money", icon: "💰" },
   { label: "Health", icon: "🏥" },
   { label: "Arts & Entertainment", icon: "🎭" },
-  { label: "Environment", icon: "🌱" },
+  { label: "Environment", icon: "🍃" },
 ];

@@ -168,7 +168,10 @@ function BottomNav() {
 /* ── Story Card ── */
 
 function StoryCard({ story, onClick }: { story: Story; onClick: () => void }) {
-  const isGreen = story.confidenceBadge === "green";
+  // Below the Radar stories always render the Developing badge regardless of
+  // story.confidenceBadge, per bible §3.3: by definition they haven't reached
+  // the publication threshold for full confidence.
+  const isGreen = !story.belowTheRadar && story.confidenceBadge === "green";
   const [showBadgeTip, setShowBadgeTip] = useState(false);
 
   return (
@@ -194,7 +197,7 @@ function StoryCard({ story, onClick }: { story: Story; onClick: () => void }) {
                 : "bg-developing-muted text-developing"
             }`}
           >
-            {isGreen ? "Verified" : "Developing"}
+            {isGreen ? "High Confidence" : "Developing"}
           </button>
           {showBadgeTip && (
             <div className="absolute right-0 top-full mt-1.5 w-60 rounded-xl bg-navy p-3 shadow-lg z-50 animate-[fadeIn_0.15s_ease-out]">
@@ -286,6 +289,14 @@ export default function Home() {
     )
     .sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime());
 
+  // Split into Today's Stories (non-BTR) and Below the Radar. BTR stories
+  // appear only in the BTR section, never in Today's Stories. Max 3 BTR
+  // stories shown, most recent first (bible §3.3 / Session 16a).
+  const todaysStories = filteredStories.filter((s) => !s.belowTheRadar);
+  const belowTheRadarStories = filteredStories
+    .filter((s) => s.belowTheRadar)
+    .slice(0, 3);
+
   if (loading) return <SkeletonScreen />;
 
   return (
@@ -339,7 +350,7 @@ export default function Home() {
                 Daily Brief
               </h3>
               <p className="text-xs text-warm-white/60">
-                Tap to listen to today's brief
+                5 stories · ~8 minutes
               </p>
             </div>
             <svg className="w-5 h-5 text-warm-white/40 shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
@@ -352,7 +363,7 @@ export default function Home() {
         <section>
           <h3 className="text-base font-semibold text-navy mb-3">Today's Stories</h3>
 
-          {filteredStories.length === 0 ? (
+          {todaysStories.length === 0 ? (
             <div className="text-center py-12">
               <p className="text-text-secondary text-sm">
                 No stories match your selected topics.
@@ -366,7 +377,7 @@ export default function Home() {
             </div>
           ) : (
             <div className="flex flex-col gap-3">
-              {filteredStories.map((story) => (
+              {todaysStories.map((story) => (
                 <StoryCard
                   key={story.id}
                   story={story}
@@ -376,6 +387,36 @@ export default function Home() {
             </div>
           )}
         </section>
+
+        {/* Below the Radar — bible §3.3 / Session 16a.
+            Hidden entirely when no qualifying stories exist (no empty state). */}
+        {belowTheRadarStories.length > 0 && (
+          <section className="mt-8">
+            <h3 className="text-base font-semibold text-navy mb-1.5 flex items-center gap-1.5">
+              Below the Radar
+              <span
+                className="text-text-muted text-sm cursor-help select-none"
+                title="Below the Radar stories have at least one wire service source (AP or Reuters) but limited coverage elsewhere. They appear here so important stories aren't missed even when most outlets haven't picked them up."
+                aria-label="About Below the Radar"
+              >
+                ⓘ
+              </span>
+            </h3>
+            <p className="text-xs text-text-secondary mb-3 leading-relaxed">
+              Stories other outlets are under-covering. Fewer sources have reported
+              these, so facts may still be developing.
+            </p>
+            <div className="flex flex-col gap-3">
+              {belowTheRadarStories.map((story) => (
+                <StoryCard
+                  key={story.id}
+                  story={story}
+                  onClick={() => navigate(`/story/${story.id}`)}
+                />
+              ))}
+            </div>
+          </section>
+        )}
       </main>
 
       {/* Bottom Navigation */}

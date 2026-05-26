@@ -211,10 +211,10 @@ function WhatDoYouCareAbout({
           What do you care about?
         </h2>
         <p className="text-text-secondary text-sm sm:text-base mb-6">
-          Pick topics that interest you. You can change these anytime.
+          All topics are on. Tap to remove any you're not interested in. You can change these anytime.
         </p>
 
-        <div className="grid grid-cols-2 gap-2.5">
+        <div className="grid grid-cols-3 gap-2">
           {TOPICS.map((topic) => {
             const isSelected = selected.has(topic.label);
             return (
@@ -241,19 +241,16 @@ function WhatDoYouCareAbout({
 
           <button
             onClick={onSelectAll}
-            className={`col-span-2 flex items-center justify-center rounded-2xl border-2 py-3.5 px-3 transition-all duration-200 cursor-pointer ${
+            disabled={allSelected}
+            className={`col-span-3 flex items-center justify-center rounded-2xl border-2 py-3.5 px-3 transition-all duration-200 ${
               allSelected
-                ? "border-navy bg-navy text-warm-white shadow-lg"
-                : "border-border bg-white hover:border-navy/30 hover:shadow-md"
+                ? "border-border bg-warm-gray text-text-muted opacity-60 cursor-not-allowed"
+                : "border-border bg-white text-navy hover:border-navy/30 hover:shadow-md cursor-pointer"
             }`}
           >
             <span className="text-xl mr-2">✨</span>
-            <span
-              className={`text-xs sm:text-sm font-semibold ${
-                allSelected ? "text-warm-white" : "text-navy"
-              }`}
-            >
-              All Topics
+            <span className="text-xs sm:text-sm font-semibold">
+              Select All
             </span>
           </button>
         </div>
@@ -484,7 +481,11 @@ export default function Onboarding() {
   const navigate = useNavigate();
   const [step, setStep] = useState(0);
   const [readerLevel, setReaderLevel] = useState<ReaderLevel | null>(null);
-  const [selectedTopics, setSelectedTopics] = useState<Set<string>>(new Set());
+  // Per bible §2 + Session 3: all 10 topics are pre-selected by default.
+  // User taps to DESELECT topics they don't want. Must keep at least 1 to advance.
+  const [selectedTopics, setSelectedTopics] = useState<Set<string>>(
+    () => new Set(TOPICS.map((t) => t.label))
+  );
   const [newsMode, setNewsMode] = useState<NewsMode | null>(null);
   const [voice, setVoice] = useState<VoiceId | null>(null);
 
@@ -508,10 +509,10 @@ export default function Onboarding() {
   }
 
   function selectAllTopics() {
+    // No-op when all topics already selected — bible §2 opt-out model means
+    // "Select All" should never be a destructive (deselect-all) toggle.
     setSelectedTopics((prev) => {
-      if (prev.size === TOPICS.length) {
-        return new Set();
-      }
+      if (prev.size === TOPICS.length) return prev;
       return new Set(TOPICS.map((t) => t.label));
     });
   }

@@ -6,16 +6,21 @@
  */
 
 @theme {
-  /* Color palette */
-  --color-navy: #1a1a2e;
-  --color-navy-light: #2d2d4a;
+  /* Color palette
+   * Per bible Session 1 COLOR PALETTE: navy (#1a1a2e) and navy-light (#2d2d4a)
+   * are not part of the Lens palette. The `--color-navy` / `--color-navy-light`
+   * token names are retained for backwards compatibility with component classes
+   * (bg-navy, text-navy, etc.) but the values are pure black and a dark gray
+   * hover-state. Rename the tokens later if convenient. */
+  --color-navy: #000000;
+  --color-navy-light: #1a1a1a;
   --color-warm-white: #fafafa;
   --color-warm-gray: #f0f0f0;
   --color-confidence: #2ecc71;
   --color-confidence-muted: #d4efdf;
   --color-developing: #f39c12;
   --color-developing-muted: #fef3d4;
-  --color-text-primary: #1a1a2e;
+  --color-text-primary: #000000;
   --color-text-secondary: #6b7280;
   --color-text-muted: #9ca3af;
   --color-border: #e5e7eb;
@@ -43,12 +48,13 @@ body {
   min-height: 100dvh;
 }
 
-/* Wordmark */
+/* Wordmark — canonical "lens." in lowercase serif with trailing period.
+ * Per bible: pure black on warm white is non-negotiable for logo treatment. */
 .lens-wordmark {
   font-family: var(--font-serif);
   font-weight: 700;
   letter-spacing: -0.02em;
-  color: var(--color-navy);
+  color: #000000;
 }
 
 /* Line clamp */

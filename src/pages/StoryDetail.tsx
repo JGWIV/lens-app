@@ -1,10 +1,15 @@
-import { useState, useCallback, useEffect, useRef } from "react";
+import { useState, useCallback, useEffect, useMemo, useRef } from "react";
 import { useParams, useNavigate, Navigate } from "react-router-dom";
-import { stories, type ReadingLevel, type Perspective, type TapToDefine, type Story } from "@/data/stories";
+import { stories, type ReadingLevel, type Perspective, type Source, type TapToDefine, type Story } from "@/data/stories";
 import { loadPreferences } from "@/data/preferences";
 import { VOICE_OPTIONS, type VoiceId } from "@/data/constants";
 import AudioPlayer from "@/components/AudioPlayer";
-import CoverageMap from "@/components/CoverageMap";
+// Coverage Map import preserved but commented out — feature is hidden pending
+// a product design decision on whether geographic visualization is the right
+// axis for source coverage. Reactivate this import and the JSX usage in
+// HowWeKnow when that decision is made. The component file at
+// @/components/CoverageMap is untouched.
+// import CoverageMap from "@/components/CoverageMap";
 
 type TabId = "happened" | "matters" | "think" | "unknown";
 
@@ -139,9 +144,67 @@ function PerspectiveCard({ item, index, definitions }: { item: Perspective; inde
 
 /* ── How We Know Panel ── */
 
+function SourceRow({ source }: { source: Source }) {
+  return (
+    <div className="flex items-center gap-2">
+      <div className="w-1.5 h-1.5 rounded-full bg-confidence shrink-0" />
+      <span className="text-sm text-text-primary flex-1">{source.name}</span>
+      <span className="text-[10px] font-medium text-text-muted bg-warm-gray px-2 py-0.5 rounded-full shrink-0">
+        {source.type}
+      </span>
+    </div>
+  );
+}
+
+// Heuristics for sorting a Source into Primary Sources vs News Outlets.
+// Primary Sources = institutional actors who did the work or funded it, plus
+// the peer-reviewed publication itself. News Outlets = everyone who reported
+// on it. The Source.type string is the only signal we have.
+const NEWS_OUTLET_KEYWORDS = [
+  "News",
+  "Newspaper",
+  "Magazine",
+  "Broadcast",
+  "Broadcasting",
+  "Wire Service",
+  "Public Media",
+  "Print",
+  "Digital News",
+  "Journalism",
+  "Fact-Checker",
+  "Specialized",
+  "Investigative",
+  "International",
+  "Regional",
+  "Expert",
+];
+
 function HowWeKnow({ story }: { story: Story }) {
   const [open, setOpen] = useState(false);
   const sourceCount = story.sources.confirming.length;
+
+  const { primarySources, newsSources } = useMemo(() => {
+    const primary: Source[] = [];
+    const news: Source[] = [];
+    for (const s of story.sources.confirming) {
+      const t = s.type;
+      if (
+        t.includes("Primary Source") ||
+        t.includes("Funder") ||
+        t.includes("Peer-Reviewed Journal")
+      ) {
+        primary.push(s);
+      } else {
+        if (!NEWS_OUTLET_KEYWORDS.some((k) => t.includes(k))) {
+          console.warn(
+            `[Lens] Source.type "${t}" did not match Primary Source or News Outlet patterns; defaulting to News Outlets. Audit and refine the classification rules if needed.`
+          );
+        }
+        news.push(s);
+      }
+    }
+    return { primarySources: primary, newsSources: news };
+  }, [story.sources.confirming]);
 
   return (
     <section className="mb-8">
@@ -170,21 +233,33 @@ function HowWeKnow({ story }: { story: Story }) {
 
       {open && (
         <div className="mt-2 rounded-xl border border-border bg-white p-4 animate-[fadeIn_0.15s_ease-out]">
-          {/* Sources list */}
-          <h4 className="text-xs font-semibold text-navy/70 uppercase tracking-wider mb-3">
-            Sources for this story
-          </h4>
-          <div className="flex flex-col gap-2.5 mb-4">
-            {story.sources.confirming.map((source) => (
-              <div key={source.name} className="flex items-center gap-2">
-                <div className="w-1.5 h-1.5 rounded-full bg-confidence shrink-0" />
-                <span className="text-sm text-text-primary flex-1">{source.name}</span>
-                <span className="text-[10px] font-medium text-text-muted bg-warm-gray px-2 py-0.5 rounded-full shrink-0">
-                  {source.type}
-                </span>
+          {/* Primary Sources — hidden when empty */}
+          {primarySources.length > 0 && (
+            <>
+              <h4 className="text-xs font-semibold text-navy/70 uppercase tracking-wider mb-3">
+                Primary Sources
+              </h4>
+              <div className="flex flex-col gap-2.5 mb-4">
+                {primarySources.map((source) => (
+                  <SourceRow key={source.name} source={source} />
+                ))}
               </div>
-            ))}
-          </div>
+            </>
+          )}
+
+          {/* News Outlets That Covered This Story — hidden when empty */}
+          {newsSources.length > 0 && (
+            <>
+              <h4 className="text-xs font-semibold text-navy/70 uppercase tracking-wider mb-3">
+                News Outlets That Covered This Story
+              </h4>
+              <div className="flex flex-col gap-2.5 mb-4">
+                {newsSources.map((source) => (
+                  <SourceRow key={source.name} source={source} />
+                ))}
+              </div>
+            </>
+          )}
 
           {/* Methodology */}
           <div className="pt-3 border-t border-border/60">
@@ -196,13 +271,16 @@ function HowWeKnow({ story }: { story: Story }) {
             </p>
           </div>
 
-          {/* Coverage Map */}
-          <CoverageMap sources={story.sources.confirming} />
+          {/* Coverage Map hidden pending product design decision on whether
+              geographic visualization is the right axis for source coverage.
+              Reactivate the import at the top of this file alongside this JSX.
+              <CoverageMap sources={story.sources.confirming} /> */}
 
-          {/* Source count summary */}
+          {/* News-outlet count summary. Primary sources are listed separately
+              above and intentionally not counted in this headline. */}
           <div className="mt-3 pt-3 border-t border-border/60">
             <p className="text-xs text-text-muted text-center">
-              This story was built from {sourceCount} sources
+              {newsSources.length} news {newsSources.length === 1 ? "outlet" : "outlets"} covered this story
             </p>
           </div>
         </div>
@@ -466,6 +544,16 @@ export default function StoryDetail() {
       </header>
 
       <main className="px-page max-w-lg mx-auto">
+        {/* Below the Radar banner — bible §16a step 6. Informational only. */}
+        {story.belowTheRadar && (
+          <div className="mt-4 flex items-center gap-2 rounded-lg bg-developing-muted px-3 py-2">
+            <span className="w-1.5 h-1.5 rounded-full bg-developing shrink-0" />
+            <p className="text-xs font-medium text-developing leading-snug">
+              Below the Radar — fewer sources have reported this story. Facts may still be developing.
+            </p>
+          </div>
+        )}
+
         {/* Headline */}
         <h1 className="text-xl sm:text-2xl font-bold text-navy leading-snug tracking-tight pt-5 pb-4">
           {story.headline}

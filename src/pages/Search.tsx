@@ -119,7 +119,9 @@ function BottomNav() {
 /* ── Result Card ── */
 
 function ResultCard({ story, onClick }: { story: Story; onClick: () => void }) {
-  const isGreen = story.confidenceBadge === "green";
+  // Below the Radar stories always render the Developing badge regardless of
+  // story.confidenceBadge — matches Home.tsx logic per bible §3.3.
+  const isGreen = !story.belowTheRadar && story.confidenceBadge === "green";
 
   return (
     <div
@@ -136,7 +138,7 @@ function ResultCard({ story, onClick }: { story: Story; onClick: () => void }) {
               : "bg-developing-muted text-developing"
           }`}
         >
-          {isGreen ? "Verified" : "Developing"}
+          {isGreen ? "High Confidence" : "Developing"}
         </span>
       </div>
 
@@ -165,7 +167,7 @@ function TopicGrid({ onSelectTopic }: { onSelectTopic: (label: string) => void }
   return (
     <section className="mt-6">
       <h3 className="text-base font-semibold text-navy mb-3">Browse by topic</h3>
-      <div className="grid grid-cols-2 gap-2.5">
+      <div className="grid grid-cols-3 gap-2">
         {TOPICS.map((topic) => (
           <button
             key={topic.label}

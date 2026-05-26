@@ -71,9 +71,11 @@ export default function Settings() {
   }
 
   function handleSelectAllTopics() {
+    // No-op when all topics already selected — mirrors Onboarding behavior
+    // (bible §2 opt-out model; Select All is never destructive).
     setTopics((prev) => {
-      const allSelected = prev.size === TOPICS.length;
-      const next = allSelected ? new Set([TOPICS[0].label]) : new Set(TOPICS.map((t) => t.label));
+      if (prev.size === TOPICS.length) return prev;
+      const next = new Set(TOPICS.map((t) => t.label));
       persist({ topics: [...next] });
       return next;
     });
@@ -183,7 +185,7 @@ export default function Settings() {
         {/* ── Your Topics ── */}
         <section>
           <SectionHeader>Your Topics</SectionHeader>
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-3 gap-2">
             {TOPICS.map((topic) => {
               const isSelected = topics.has(topic.label);
               return (
@@ -205,15 +207,16 @@ export default function Settings() {
             })}
             <button
               onClick={handleSelectAllTopics}
-              className={`col-span-2 flex items-center justify-center rounded-xl border-2 py-3 px-3 transition-all duration-200 cursor-pointer ${
+              disabled={allTopicsSelected}
+              className={`col-span-3 flex items-center justify-center rounded-xl border-2 py-3 px-3 transition-all duration-200 ${
                 allTopicsSelected
-                  ? "border-navy bg-navy text-warm-white"
-                  : "border-border bg-white hover:border-navy/30"
+                  ? "border-border bg-warm-gray text-text-muted opacity-60 cursor-not-allowed"
+                  : "border-border bg-white text-navy hover:border-navy/30 cursor-pointer"
               }`}
             >
               <span className="text-lg mr-2">✨</span>
-              <span className={`text-xs font-semibold ${allTopicsSelected ? "text-warm-white" : "text-navy"}`}>
-                All Topics
+              <span className="text-xs font-semibold">
+                Select All
               </span>
             </button>
           </div>
@@ -308,10 +311,13 @@ export default function Settings() {
           <SectionHeader>About Lens</SectionHeader>
           <div className="rounded-xl border-2 border-border bg-white p-4">
             <p className="text-sm text-text-secondary leading-relaxed">
-              Lens pulls reporting from more than a hundred sources, cross-references
-              the facts, and strips out the spin. Every story shows you what happened,
-              why it matters, what people think, and what we don't know yet — so you
-              can form your own opinion.
+              Lens pulls reporting from more than a hundred sources across the
+              media spectrum, identifies the facts, and separates them from the
+              framing. You get clarity. You decide what to think.
+            </p>
+            <p className="text-sm text-text-secondary leading-relaxed mt-3">
+              Age-appropriate content filtering is active for Young Reader and
+              Teen Reader profiles.
             </p>
             <p className="text-xs text-text-muted mt-3">Version 0.1.0</p>
           </div>
